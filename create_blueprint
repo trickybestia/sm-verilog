@@ -1,0 +1,26 @@
+#!/bin/bash
+
+print_usage () {
+    echo -e "Usage: $0 top_module [verilog_files]\n\nIf using multiple Verilog files, be sure to pass dependencies before their dependents!"
+}
+
+if [ "$1" == "-h" ] || [ "$1" == "--help" ] || [ "$1" == "" ]; then
+    print_usage
+
+    exit
+fi
+
+top_module="$1"
+verilog_files="${@:2}"
+
+mkdir -p "./blueprints/$top_module/"
+
+yosys <<EOF
+read -sv $verilog_files
+synth -top $top_module -flatten
+dfflibmap -liberty scrap_mechanic_cells.lib
+abc -liberty scrap_mechanic_cells.lib
+write_json ./blueprints/$top_module/$top_module.json
+EOF
+
+python -m create-blueprint "./blueprints/$top_module/$top_module.json" "./blueprints/$top_module/" "$top_module"
