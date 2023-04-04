@@ -238,14 +238,14 @@ def main():
         if port["direction"] == "output":
             color = color_generator.next_color()
 
-            description += f"{port_name}: {color.hex}\n"
+            description += f"{port_name}: {color.name}\n"
 
             port_bits = port["bits"]
 
             for bit in port_bits:
                 blueprint.append(
                     create_gate(
-                        BUFFER_GATE_MODE, output_ports_offset, 2, 0, gate_id, color.name
+                        BUFFER_GATE_MODE, output_ports_offset, 2, 0, gate_id, color.hex
                     )
                 )
 
