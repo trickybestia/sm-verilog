@@ -20,14 +20,26 @@ class Blueprint:
         self.blocks = []
 
     def create_solid(
-        self, shape_id: str, x: int, y: int, z: int, color: Tuple[str, None] = None
+        self,
+        shape_id: str,
+        x: int,
+        y: int,
+        z: int,
+        color: Tuple[str, None] = None,
+        xaxis: Tuple[int, None] = None,
+        zaxis: Tuple[int, None] = None,
     ):
+        if xaxis is None:
+            xaxis = -1
+        if zaxis is None:
+            zaxis = 2
+
         block = {
             "bounds": {"x": 1, "y": 1, "z": 1},
             "pos": {"x": x, "y": y, "z": z},
             "shapeId": shape_id,
-            "xaxis": -1,
-            "zaxis": 2,
+            "xaxis": xaxis,
+            "zaxis": zaxis,
         }
 
         if color is not None:
@@ -43,7 +55,14 @@ class Blueprint:
         id: int,
         gate_id: int,
         color: Tuple[str, None] = None,
+        xaxis: Tuple[int, None] = None,
+        zaxis: Tuple[int, None] = None,
     ):
+        if xaxis is None:
+            xaxis = 1
+        if zaxis is None:
+            zaxis = -2
+
         block = {
             "controller": {
                 "active": False,
@@ -53,8 +72,8 @@ class Blueprint:
             },
             "pos": {"x": x - 1, "y": y + 1, "z": z},
             "shapeId": ShapeId.Switch,
-            "xaxis": 1,
-            "zaxis": -2,
+            "xaxis": xaxis,
+            "zaxis": zaxis,
         }
 
         if color is not None:
@@ -70,7 +89,14 @@ class Blueprint:
         y: int,
         z: int,
         color: Tuple[str, None] = None,
+        xaxis: Tuple[int, None] = None,
+        zaxis: Tuple[int, None] = None,
     ):
+        if xaxis is None:
+            xaxis = -1
+        if zaxis is None:
+            zaxis = 2
+
         block = {
             "pos": {"x": x, "y": y, "z": z},
             "controller": {
@@ -81,8 +107,8 @@ class Blueprint:
                 "mode": int(gate.mode),
             },
             "shapeId": ShapeId.Gate,
-            "xaxis": -1,
-            "zaxis": 2,
+            "xaxis": xaxis,
+            "zaxis": zaxis,
         }
 
         if color is not None:
@@ -93,7 +119,7 @@ class Blueprint:
     def save(self, path: Path):
         path /= str(self.uuid)
 
-        path.mkdir()
+        path.mkdir(parents=True)
 
         (path / "description.json").write_text(
             json.dumps(

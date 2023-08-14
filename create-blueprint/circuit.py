@@ -2,9 +2,9 @@ from dataclasses import dataclass
 from typing import Self
 import json
 
+from .cell import Cell
 from .gate import Gate, GateMode
 from .utils import get_or_insert
-from .cells import CELLS
 from .gate_id_generator import GateIdGenerator
 from .net import Net
 
@@ -23,7 +23,7 @@ class Circuit:
     id_generator: GateIdGenerator
 
     @classmethod
-    def from_yosys_output(cls, yosys_output: str) -> Self:
+    def from_yosys_output(cls, cells: dict[str, Cell], yosys_output: str) -> Self:
         json_yosys_output = json.loads(yosys_output)
 
         modules = json_yosys_output["modules"]
@@ -34,7 +34,6 @@ class Circuit:
         module = next(iter(modules.values()))
 
         ports = module["ports"]
-        cells = module["cells"]
 
         c = Circuit()
         all_gates: dict[int, Gate] = {}
@@ -85,7 +84,7 @@ class Circuit:
                             case _:
                                 _net(bit).outputs.append(gate_id)
 
-        for cell in cells.values():
+        for cell in module["cells"].values():
             gate_id = c.id_generator.next_single()
             gate = Gate()
 
@@ -94,14 +93,12 @@ class Circuit:
 
             connections = cell["connections"]
 
-            gate_mode, inputs, outputs = CELLS[cell["type"]]
+            cell_info = cells[cell["type"]]
 
-            gate.mode = gate_mode
+            gate.mode = cell_info.mode
+            _net(connections[cell_info.output][0]).input = gate_id
 
-            for output in outputs:
-                _net(connections[output][0]).input = gate_id
-
-            for input in inputs:
+            for input in cell_info.inputs:
                 _net(connections[input][0]).outputs.append(gate_id)
 
         for net in nets.values():

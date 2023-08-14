@@ -11,20 +11,20 @@ module UInt16Calculator(
     output bit invalid_input
 );
     always begin
-        if (add + subtract + divide + multiply != 1) begin
-            invalid_input = 1;
-            result = 0;
-        end else begin
-            invalid_input = 0;
+        invalid_input <= 0;
+        result <= 0;
 
+        if (add + subtract + divide + multiply != 1) begin
+            invalid_input <= 1;
+        end else begin
             if (add) begin
-                result = a + b;
+                result <= a + b;
             end else if (subtract) begin
-                result = a - b;
+                result <= a - b;
             end else if (divide) begin
-                result = a / b;
+                result <= a / b;
             end else begin
-                result = a * b;
+                result <= a * b;
             end
         end 
     end
