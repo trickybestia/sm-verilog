@@ -25,12 +25,14 @@ class ColorGenerator:
     _color_index: int
 
     def __init__(self) -> None:
-        self._color_index = -1
+        self._color_index = 0
 
     def reset(self):
-        self._color_index = -1
+        self._color_index = 0
 
-    def next_color(self) -> Color:
-        self._color_index += 1
+    def next(self) -> Color:
+        result = COLORS[self._color_index]
 
-        return COLORS[self._color_index % len(COLORS)]
+        self._color_index = (self._color_index + 1) % len(COLORS)
+
+        return result

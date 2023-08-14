@@ -1,6 +1,6 @@
 from typing import Tuple
 
-from .gate import GateMode
+from .circuit import GateMode
 
 
 CELLS: dict[
@@ -9,6 +9,7 @@ CELLS: dict[
     "AND2": (GateMode.AND, "AB", "Y"),
     "AND3": (GateMode.AND, "ABC", "Y"),
     "AND4": (GateMode.AND, "ABCD", "Y"),
+    "OR1": (GateMode.OR, "A", "Y"),
     "OR2": (GateMode.OR, "AB", "Y"),
     "OR3": (GateMode.OR, "ABC", "Y"),
     "OR4": (GateMode.OR, "ABCD", "Y"),

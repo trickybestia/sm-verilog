@@ -1,39 +1,18 @@
 library(scrap_mechanic_cells) {
-  cell(BUF) {
-    area: 6;
-    pin(A) { direction: input; }
-    pin(Y) { direction: output;
-              function: "A"; }
-  }
-
-  cell(DFF) {
-    area: 6;
-    ff(IQ, IQN) { clocked_on: C;
-                  next_state: D; }
-    pin(C) { direction: input;
-                 clock: true; }
-    pin(D) { direction: input; }
-    pin(Q) { direction: output;
-              function: "IQ"; }
-  }
-
   cell(AND2) {
-    area: 4;
     pin(A) { direction: input; }
     pin(B) { direction: input; }
     pin(Y) { direction: output;
              function: "A*B"; }
   }
   cell(AND3) {
-    area: 5;
     pin(A) { direction: input; }
     pin(B) { direction: input; }
     pin(C) { direction: input; }
     pin(Y) { direction: output;
              function: "A*B*C"; }
   }
-  cell(AND4) {
-    area: 5;
+  cell(AND4) {    
     pin(A) { direction: input; }
     pin(B) { direction: input; }
     pin(C) { direction: input; }
@@ -42,23 +21,25 @@ library(scrap_mechanic_cells) {
              function: "A*B*C*D"; }
   }
 
-  cell(OR2) {
-    area: 4;
+  cell(OR1) {    
+    pin(A) { direction: input; }
+    pin(Y) { direction: output;
+             function: "A"; }
+  }
+  cell(OR2) {    
     pin(A) { direction: input; }
     pin(B) { direction: input; }
     pin(Y) { direction: output;
              function: "A+B"; }
   }
-  cell(OR3) {
-    area: 5;
+  cell(OR3) {    
     pin(A) { direction: input; }
     pin(B) { direction: input; }
     pin(C) { direction: input; }
     pin(Y) { direction: output;
              function: "A+B+C"; }
   }
-  cell(OR4) {
-    area: 6;
+  cell(OR4) {    
     pin(A) { direction: input; }
     pin(B) { direction: input; }
     pin(C) { direction: input; }
@@ -67,23 +48,20 @@ library(scrap_mechanic_cells) {
              function: "A+B+C+D"; }
   }
 
-  cell(XOR2) {
-    area: 4;
+  cell(XOR2) {    
     pin(A) { direction: input; }
     pin(B) { direction: input; }
     pin(Y) { direction: output;
              function: "A^B"; }
   }
-  cell(XOR3) {
-    area: 5;
+  cell(XOR3) {    
     pin(A) { direction: input; }
     pin(B) { direction: input; }
     pin(C) { direction: input; }
     pin(Y) { direction: output;
              function: "A^B^C"; }
   }
-  cell(XOR4) {
-    area: 6;
+  cell(XOR4) {    
     pin(A) { direction: input; }
     pin(B) { direction: input; }
     pin(C) { direction: input; }
@@ -92,23 +70,20 @@ library(scrap_mechanic_cells) {
              function: "A^B^C^D"; }
   }
 
-  cell(NAND2) {
-    area: 4;
+  cell(NAND2) {    
     pin(A) { direction: input; }
     pin(B) { direction: input; }
     pin(Y) { direction: output;
              function: "!(A*B)"; }
   }
-  cell(NAND3) {
-    area: 5;
+  cell(NAND3) {    
     pin(A) { direction: input; }
     pin(B) { direction: input; }
     pin(C) { direction: input; }
     pin(Y) { direction: output;
              function: "!(A*B*C)"; }
   }
-  cell(NAND4) {
-    area: 6;
+  cell(NAND4) {    
     pin(A) { direction: input; }
     pin(B) { direction: input; }
     pin(C) { direction: input; }
@@ -117,29 +92,25 @@ library(scrap_mechanic_cells) {
              function: "!(A*B*C*D)"; }
   }
 
-  cell(NOR1) {
-    area: 3;
+  cell(NOR1) {    
     pin(A) { direction: input; }
     pin(Y) { direction: output;
               function: "!A"; }
   }
-  cell(NOR2) {
-    area: 4;
+  cell(NOR2) {    
     pin(A) { direction: input; }
     pin(B) { direction: input; }
     pin(Y) { direction: output;
              function: "!(A+B)"; }
   }
-  cell(NOR3) {
-    area: 5;
+  cell(NOR3) {    
     pin(A) { direction: input; }
     pin(B) { direction: input; }
     pin(C) { direction: input; }
     pin(Y) { direction: output;
              function: "!(A+B+C)"; }
   }
-  cell(NOR4) {
-    area: 6;
+  cell(NOR4) {    
     pin(A) { direction: input; }
     pin(B) { direction: input; }
     pin(C) { direction: input; }

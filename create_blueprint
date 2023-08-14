@@ -17,9 +17,10 @@ mkdir -p "./blueprints/$top_module/"
 
 yosys <<EOF
 read -sv $verilog_files
-synth -top $top_module -flatten
-dfflibmap -liberty scrap_mechanic_cells.lib
+synth -flatten -top $top_module
 abc -liberty scrap_mechanic_cells.lib
+opt
+#show -lib scrap_mechanic_cells.sv $top_module
 write_json ./blueprints/$top_module/$top_module.json
 EOF
 

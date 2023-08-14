@@ -1,10 +1,3 @@
-module DFF(C, D, Q);
-    input C, D;
-    output reg Q;
-    always @(posedge C)
-        Q <= D;
-endmodule
-
 module AND2(A, B, Y);
     input A, B;
     output Y = A & B;
