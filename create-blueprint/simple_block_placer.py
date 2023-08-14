@@ -16,8 +16,8 @@ class SimpleBlockPlacer(BlockPlacer):
 
         self.height = 1
         self.auto_height = True
-        self.compact = True
-        self.rotate_middle_gates_to_input = False
+        self.compact = False
+        self.rotate_middle_gates_to_input = True
 
     def place(self, circuit: Circuit) -> Blueprint:
         blueprint = Blueprint()

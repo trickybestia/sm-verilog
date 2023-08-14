@@ -1,10 +1,9 @@
-`include "types.sv"
+`include "UInt16DigitDisplay.sv"
 
 module UInt16DigitSelector(
-    input bit zero, one, two, three, four, five, six, seven, eight, nine,
     input UInt16 previous_number,
+    input bit one, two, three, four, five, six, seven, eight, nine,
     output UInt16 new_number,
-    output bit invalid_input,
     output bit top_left, top, top_right, bottom_right, bottom, bottom_left, middle
 );
     Digit digit;
@@ -13,35 +12,29 @@ module UInt16DigitSelector(
 
     always begin
         new_number <= 0;
-        invalid_input <= 0;
         digit <= 0;
 
-        if (zero + one + two + three + four + five + six + seven + eight + nine != 1) begin
-            invalid_input <= 1;
-        end else begin
-            if (zero) begin
-                digit <= 0;
-            end else if (one) begin
+        if (one + two + three + four + five + six + seven + eight + nine == 1) begin
+            if (one)
                 digit <= 1;
-            end else if (two) begin
+            else if (two)
                 digit <= 2;
-            end else if (three) begin
+            else if (three)
                 digit <= 3;
-            end else if (four) begin
+            else if (four)
                 digit <= 4;
-            end else if (five) begin
+            else if (five)
                 digit <= 5;
-            end else if (six) begin
+            else if (six)
                 digit <= 6;
-            end else if (seven) begin
+            else if (seven)
                 digit <= 7;
-            end else if (eight) begin
+            else if (eight)
                 digit <= 8;
-            end else begin
+            else
                 digit <= 9;
-            end
-
-            new_number <= previous_number * 10 + digit;
         end
+        
+        new_number <= previous_number * 10 + digit;
     end
 endmodule

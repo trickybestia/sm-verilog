@@ -1,4 +1,4 @@
-`include "types.sv"
+`include "UInt16DigitDisplay.sv"
 
 module UInt16NumberDisplay(
     input UInt16 number,

@@ -14,18 +14,18 @@ module UInt16Calculator(
         invalid_input <= 0;
         result <= 0;
 
-        if (add + subtract + divide + multiply != 1) begin
+        if (add + subtract + divide + multiply != 1)
             invalid_input <= 1;
-        end else begin
-            if (add) begin
-                result <= a + b;
-            end else if (subtract) begin
-                result <= a - b;
-            end else if (divide) begin
+        else if (add)
+            result <= a + b;
+        else if (subtract)
+            result <= a - b;
+        else if (divide)
+            if (b == 0)
+                invalid_input <= 1;
+            else
                 result <= a / b;
-            end else begin
-                result <= a * b;
-            end
-        end 
+        else
+            result <= a * b;
     end
 endmodule
