@@ -1,5 +1,6 @@
-from subprocess import run, PIPE, STDOUT
+from subprocess import run
 from pathlib import Path
+from typing import Tuple
 
 from .gate import GateMode
 
@@ -57,19 +58,25 @@ def _create_cells_verilog(cells: dict[str, Cell]) -> str:
     return result
 
 
-def _create_yosys_script(top_module: str, files: list[str], show: bool) -> str:
+def _create_yosys_script(
+    top_module: str, files: list[Path], show: bool, blueprints_path: Path
+) -> str:
     return f"""
 read -sv {" ".join(f'"{file}"' for file in files)}
 synth -flatten -top {top_module}
 abc -liberty scrap_mechanic_cells.lib
 opt
-{"" if show else "#"}show -lib scrap_mechanic_cells.sv {top_module}
-write_json ./blueprints/{top_module}/{top_module}.json
+{f"show -lib scrap_mechanic_cells.sv {top_module}" if show else ""}
+write_json {blueprints_path / top_module / f"{top_module}.json"}
 """
 
 
 def compile(
-    top_module: str, files: list[str], cells: dict[str, Cell], show: bool
+    top_module: str,
+    files: list[str],
+    cells: dict[str, Cell],
+    show: bool,
+    blueprints_path: Path,
 ) -> str:
     Path("scrap_mechanic_cells.lib").write_text(_create_cells_liberty(cells))
     Path("scrap_mechanic_cells.sv").write_text(_create_cells_verilog(cells))
@@ -77,9 +84,7 @@ def compile(
     run(
         "yosys",
         check=True,
-        input=_create_yosys_script(top_module, files, show).encode(),
+        input=_create_yosys_script(top_module, files, show, blueprints_path).encode(),
     )
 
-    print("pog")
-
-    return Path(f"./blueprints/{top_module}/{top_module}.json").read_text()
+    return (blueprints_path / top_module / f"{top_module}.json").read_text()
