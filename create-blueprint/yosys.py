@@ -1,9 +1,7 @@
 from subprocess import run
 from pathlib import Path
-from typing import Tuple
 
 from .gate import GateMode
-
 from .cell import Cell
 
 

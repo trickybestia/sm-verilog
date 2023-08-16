@@ -1,4 +1,5 @@
 from typing import Tuple
+
 from .shapes import ShapeId
 from .color_generator import ColorGenerator
 from .blueprint import Blueprint
