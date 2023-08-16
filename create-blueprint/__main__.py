@@ -98,7 +98,7 @@ def main():
 
     yosys_output = compile(args.top, args.files, CELLS, args.show, args.blueprints_path)
 
-    circuit = Circuit.from_yosys_output(CELLS, yosys_output)
+    circuit = Circuit.from_yosys_output(CELLS, yosys_output, args.top)
 
     block_placer = BlockPlacer()
 

@@ -23,15 +23,15 @@ class Circuit:
     id_generator: GateIdGenerator
 
     @classmethod
-    def from_yosys_output(cls, cells: dict[str, Cell], yosys_output: str) -> Self:
+    def from_yosys_output(
+        cls,
+        cells: dict[str, Cell],
+        yosys_output: str,
+        top_module: str,
+    ) -> Self:
         json_yosys_output = json.loads(yosys_output)
 
-        modules = json_yosys_output["modules"]
-
-        if len(modules) != 1:
-            raise ValueError("Yosys output must contain only one module.")
-
-        module = next(iter(modules.values()))
+        module = json_yosys_output["modules"][top_module]
 
         ports = module["ports"]
 
