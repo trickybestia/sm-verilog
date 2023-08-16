@@ -27,7 +27,10 @@ def existing_path(s: str) -> Path:
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="create-blueprint")
+    parser = argparse.ArgumentParser(
+        prog="create-blueprint",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
 
     parser.add_argument(
         "files",
@@ -37,9 +40,17 @@ def main():
         type=existing_path,
     )
     parser.add_argument(
-        "-s", "--show", help="show generated flowchart", action="store_true"
+        "-s",
+        "--show",
+        help="show generated flowchart",
+        action="store_true",
     )
-    parser.add_argument("-t", "--top", help="specify top module name", required=True)
+    parser.add_argument(
+        "-t",
+        "--top",
+        help="specify top module name",
+        required=True,
+    )
     parser.add_argument(
         "-i",
         "--cell-max-inputs",
