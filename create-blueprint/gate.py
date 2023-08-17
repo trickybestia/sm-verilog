@@ -1,5 +1,7 @@
 from enum import IntEnum
 
+from .logic import Logic
+
 
 class GateMode(IntEnum):
     """
@@ -14,10 +16,13 @@ class GateMode(IntEnum):
     XNOR = 5
 
 
-class Gate:
+class Gate(Logic):
     mode: GateMode
-    outputs: list[int]
 
     def __init__(self) -> None:
+        super().__init__()
+
         self.mode = GateMode.AND
-        self.outputs = []
+
+    def compute_output_ready_time(self, max_arrival_time: int):
+        self.output_ready_time = max_arrival_time + 1

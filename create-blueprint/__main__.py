@@ -113,8 +113,12 @@ def main():
 
     blueprint.save(args.blueprints_path / args.top)
 
+    print()
+    print()
+    print(f"Circuit delay is {circuit.output_ready_time} ticks.")
+    print()
     print(
-        f'\n\nYour blueprint is "{args.blueprints_path / args.top / str(blueprint.uuid)}"'
+        f'Your blueprint is "{args.blueprints_path / args.top / str(blueprint.uuid)}"'
     )
 
 

@@ -1,5 +1,7 @@
 from typing import Union
 
+from .timer import Timer
+from .gate import Gate
 from .shapes import ShapeId
 from .color_generator import ColorGenerator
 from .blueprint import Blueprint
@@ -24,14 +26,14 @@ class BlockPlacer:
         blueprint = Blueprint()
         color_generator = ColorGenerator()
 
-        if len(circuit.input_gates) != 0:
+        if len(circuit.inputs) != 0:
             blueprint.create_solid(ShapeId.Concrete, 0, -1, 0)
 
         blueprint.description += "Inputs (first is left):\n\n"
 
         input_gates_offset = 0
 
-        for name, data_list in circuit.input_gates.items():
+        for name, data_list in circuit.inputs.items():
             color = color_generator.next()
             blueprint.description += f"{name}: {color.name}\n"
 
@@ -59,7 +61,7 @@ class BlockPlacer:
 
         output_gates_offset = 0
 
-        for name, data_list in circuit.output_gates.items():
+        for name, data_list in circuit.outputs.items():
             color = color_generator.next()
             blueprint.description += f"{name}: {color.name}\n"
 
@@ -71,11 +73,11 @@ class BlockPlacer:
                 output_gates_offset += 1
 
         if self.auto_height:
-            self.height = int(len(circuit.middle_gates) ** 0.5)
+            self.height = int(len(circuit.middle_logic) ** 0.5)
 
         middle_gates_offset = 0
 
-        for gate_id, gate in circuit.middle_gates.items():
+        for logic_id, logic in circuit.middle_logic.items():
             x = middle_gates_offset // self.height
             y = 2
             z = middle_gates_offset % self.height
@@ -86,20 +88,32 @@ class BlockPlacer:
                 if middle_gates_offset % self.height == 0:
                     blueprint.create_solid(ShapeId.Concrete, x, y, 0)
 
-                y += 1
-                z += 1
-                xaxis = -1
-                zaxis = 0
+            if isinstance(logic, Gate):
+                if self.rotate_middle_gates_to_input:
+                    y += 1
+                    z += 1
+                    xaxis = -1
+                    zaxis = 0
 
-            blueprint.create_gate(
-                gate_id,
-                gate,
-                x,
-                y,
-                z,
-                xaxis=xaxis,
-                zaxis=zaxis,
-            )
+                blueprint.create_gate(
+                    logic_id,
+                    logic,
+                    x,
+                    y,
+                    z,
+                    xaxis=xaxis,
+                    zaxis=zaxis,
+                )
+            elif isinstance(logic, Timer):
+                blueprint.create_timer(
+                    logic_id,
+                    logic,
+                    x,
+                    y,
+                    z,
+                    xaxis=xaxis,
+                    zaxis=zaxis,
+                )
 
             if not self.compact:
                 middle_gates_offset += 1
