@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Self, Tuple
+from typing import Self, Tuple, Union
 import json
 
 from .timer import Timer
@@ -18,11 +18,17 @@ class PortData:
     gate: Gate
 
 
+@dataclass
+class OutputInfo:
+    ports: list[PortData]
+    connect_to: Union[str, None]
+
+
 class Circuit:
     all_logic: dict[int, Logic]  # Logic ID -> Logic
     middle_logic: dict[int, Logic]  # Logic ID -> Logic
     inputs: dict[str, list[PortData]]
-    outputs: dict[str, list[PortData]]
+    outputs: dict[str, OutputInfo]
     id_generator: GateIdGenerator
     output_ready_time: int
 
@@ -37,6 +43,7 @@ class Circuit:
 
         c._compute_output_ready_time()
         c._insert_buffers()
+        c._connect_outputs_to_inputs()
 
         return c
 
@@ -57,6 +64,7 @@ class Circuit:
         module = json_yosys_output["modules"][top_module]
 
         ports = module["ports"]
+        netnames = module["netnames"]
 
         c = Circuit()
         nets: dict[int, Net] = {}
@@ -83,14 +91,20 @@ class Circuit:
 
                         get_net(bit).input = gate_id
                 case "output":
+                    connect_to: Union[str, None] = None
+
+                    if "connect_to" in netnames[port_name]["attributes"]:
+                        connect_to = netnames[port_name]["attributes"]["connect_to"]
+
+                    output_info = OutputInfo([], connect_to)
+                    c.outputs[port_name] = output_info
+
                     for bit in port_bits:
                         gate_id = c.id_generator.next_single()
                         gate = Gate()
 
                         c.all_logic[gate_id] = gate
-                        get_or_insert(c.outputs, port_name, lambda: []).append(
-                            PortData(bit, gate_id, gate)
-                        )
+                        output_info.ports.append(PortData(bit, gate_id, gate))
 
                         match bit:
                             case "0":
@@ -132,17 +146,35 @@ class Circuit:
 
         return c
 
+    def _connect_outputs_to_inputs(self):
+        for output_name, output in self.outputs.items():
+            if output.connect_to:
+                input = self.inputs[output.connect_to]
+
+                if len(input) != len(output.ports):
+                    raise Exception(
+                        f"input ({output.connect_to}) and output ({output_name}) bound via connect_to attribute must have same size"
+                    )
+
+                for i in range(len(input)):
+                    input[i].gate.inputs.append(output.ports[i].gate_id)
+                    output.ports[i].gate.outputs.append(input[i].gate_id)
+
     def _compute_output_ready_time(self):
         def get_output_ready_time(gate_id: int) -> int:
             logic = self.all_logic[gate_id]
 
             if logic.output_ready_time is None:
-                arrival_times = map(
-                    get_output_ready_time,
-                    logic.inputs,
+                arrival_times = list(
+                    map(
+                        get_output_ready_time,
+                        logic.inputs,
+                    )
                 )
 
-                logic.compute_output_ready_time(max(arrival_times))
+                max_arrival_time = max(arrival_times) if len(arrival_times) != 0 else 0
+
+                logic.compute_output_ready_time(max_arrival_time)
 
             return logic.output_ready_time
 
@@ -151,14 +183,14 @@ class Circuit:
                 input_port_data.gate.output_ready_time = 0
 
         for output in self.outputs.values():
-            for output_port_data in output:
+            for output_port_data in output.ports:
                 self.output_ready_time = max(
                     self.output_ready_time,
                     get_output_ready_time(output_port_data.gate_id),
                 )
 
         for output in self.outputs.values():
-            for output_port_data in output:
+            for output_port_data in output.ports:
                 output_port_data.gate.output_ready_time = self.output_ready_time
 
     def _insert_buffers(self):

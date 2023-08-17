@@ -33,13 +33,13 @@ class BlockPlacer:
 
         input_gates_offset = 0
 
-        for name, data_list in circuit.inputs.items():
+        for name, output in circuit.inputs.items():
             color = color_generator.next()
             blueprint.description += f"{name}: {color.name}\n"
 
-            for data in data_list:
+            for port in output:
                 blueprint.create_gate(
-                    data.gate_id, data.gate, input_gates_offset, 0, 0, color.hex
+                    port.gate_id, port.gate, input_gates_offset, 0, 0, color.hex
                 )
                 blueprint.create_solid(
                     ShapeId.Concrete, input_gates_offset, -2, 0, color.hex
@@ -49,7 +49,7 @@ class BlockPlacer:
                     -2,
                     1,
                     circuit.id_generator.next_single(),
-                    data.gate_id,
+                    port.gate_id,
                     color.hex,
                 )
 
@@ -61,13 +61,13 @@ class BlockPlacer:
 
         output_gates_offset = 0
 
-        for name, data_list in circuit.outputs.items():
+        for name, output in circuit.outputs.items():
             color = color_generator.next()
             blueprint.description += f"{name}: {color.name}\n"
 
-            for data in data_list:
+            for port in output.ports:
                 blueprint.create_gate(
-                    data.gate_id, data.gate, output_gates_offset, 1, 0, color.hex
+                    port.gate_id, port.gate, output_gates_offset, 1, 0, color.hex
                 )
 
                 output_gates_offset += 1
