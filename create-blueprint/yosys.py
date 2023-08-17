@@ -45,13 +45,6 @@ def _create_cells_verilog(cells: dict[str, Cell]) -> str:
     for name, cell in cells.items():
         result += f"module {name}({', '.join([f'input {input}' for input in cell.inputs] + [f'output {cell.output}'])});\n"
 
-        result += "\tspecify\n"
-
-        for input in cell.inputs:
-            result += f"\t\t({input} => {cell.output}) = 1;\n"
-
-        result += "\tendspecify\n"
-
         result += "endmodule\n\n"
 
     return result
@@ -61,14 +54,12 @@ def _create_yosys_script(
     top_module: str, files: list[Path], show: bool, blueprints_path: Path
 ) -> str:
     return f"""
-read_verilog -specify scrap_mechanic_cells.sv
 read_verilog -sv {" ".join(f'"{file}"' for file in files)}
 synth -flatten -top {top_module}
 abc -liberty scrap_mechanic_cells.lib
 opt
 {f"show -lib scrap_mechanic_cells.sv {top_module}" if show else ""}
 write_json {blueprints_path / top_module / f"{top_module}.json"}
-sta
 """
 
 
