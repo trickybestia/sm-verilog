@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Union
 
 from .shapes import ShapeId
 from .color_generator import ColorGenerator
@@ -7,7 +7,7 @@ from .circuit import Circuit
 
 
 class BlockPlacer:
-    height: Tuple[int, None]
+    height: Union[int, None]
     compact: bool
     rotate_middle_gates_to_input: bool
     auto_height: bool

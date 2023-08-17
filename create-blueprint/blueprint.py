@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Tuple
+from typing import Any, Union
 from uuid import UUID, uuid4
 import json
 
@@ -25,9 +25,9 @@ class Blueprint:
         x: int,
         y: int,
         z: int,
-        color: Tuple[str, None] = None,
-        xaxis: Tuple[int, None] = None,
-        zaxis: Tuple[int, None] = None,
+        color: Union[str, None] = None,
+        xaxis: Union[int, None] = None,
+        zaxis: Union[int, None] = None,
     ):
         if xaxis is None:
             xaxis = -1
@@ -54,9 +54,9 @@ class Blueprint:
         z: int,
         id: int,
         gate_id: int,
-        color: Tuple[str, None] = None,
-        xaxis: Tuple[int, None] = None,
-        zaxis: Tuple[int, None] = None,
+        color: Union[str, None] = None,
+        xaxis: Union[int, None] = None,
+        zaxis: Union[int, None] = None,
     ):
         if xaxis is None:
             xaxis = 1
@@ -88,9 +88,9 @@ class Blueprint:
         x: int,
         y: int,
         z: int,
-        color: Tuple[str, None] = None,
-        xaxis: Tuple[int, None] = None,
-        zaxis: Tuple[int, None] = None,
+        color: Union[str, None] = None,
+        xaxis: Union[int, None] = None,
+        zaxis: Union[int, None] = None,
     ):
         if xaxis is None:
             xaxis = -1
