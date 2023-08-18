@@ -6,3 +6,4 @@ class ShapeId(StrEnum):
     Switch = "7cf717d7-d167-4f2d-a6e7-6b2c70aa3986"
     Gate = "9f0f56e8-2c31-4d83-996c-d00a9b296c3f"
     Timer = "8f7fd0e7-c46e-4944-a414-7ce2437bb30f"
+    Sensor = "20dcd41c-0a11-4668-9b00-97f278ce21af"

@@ -71,6 +71,12 @@ def main():
         help="rotate middle gates to make their lights visible",
         action="store_true",
     )
+    parser.add_argument(
+        "-a",
+        "--default-attachment",
+        help="attach this attachment if input doesn't already has an attachment",
+        choices=("switch", "sensor"),
+    )
 
     block_placer_arguments_parser = parser.add_mutually_exclusive_group(required=True)
     block_placer_arguments_parser.add_argument(
@@ -106,6 +112,7 @@ def main():
     block_placer.auto_height = args.auto_height
     block_placer.compact = args.compact
     block_placer.rotate_middle_gates_to_input = args.rotate_middle_gates_to_input
+    block_placer.default_attachment = args.default_attachment
 
     blueprint: Blueprint = block_placer.place(circuit)
 

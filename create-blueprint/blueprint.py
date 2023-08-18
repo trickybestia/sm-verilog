@@ -48,6 +48,44 @@ class Blueprint:
 
         self.blocks.append(block)
 
+    def create_sensor(
+        self,
+        x: int,
+        y: int,
+        z: int,
+        id: int,
+        gate_id: int,
+        color: Union[str, None] = None,
+        xaxis: Union[int, None] = None,
+        zaxis: Union[int, None] = None,
+    ):
+        if xaxis is None:
+            xaxis = -3
+        if zaxis is None:
+            zaxis = -2
+
+        block = {
+            "controller": {
+                "audioEnabled": False,
+                "buttonMode": True,
+                "colorMode": True,
+                "color": "EEEEEE",
+                "range": 1,
+                "id": id,
+                "controllers": [{"id": gate_id}],
+                "joints": None,
+            },
+            "pos": {"x": x, "y": y, "z": z},
+            "shapeId": ShapeId.Sensor,
+            "xaxis": xaxis,
+            "zaxis": zaxis,
+        }
+
+        if color is not None:
+            block["color"] = color
+
+        self.blocks.append(block)
+
     def create_switch(
         self,
         x: int,
@@ -60,9 +98,9 @@ class Blueprint:
         zaxis: Union[int, None] = None,
     ):
         if xaxis is None:
-            xaxis = 1
+            xaxis = -1
         if zaxis is None:
-            zaxis = -2
+            zaxis = 0
 
         block = {
             "controller": {
@@ -71,7 +109,7 @@ class Blueprint:
                 "controllers": [{"id": gate_id}],
                 "joints": None,
             },
-            "pos": {"x": x - 1, "y": y + 1, "z": z},
+            "pos": {"x": x, "y": y, "z": z},
             "shapeId": ShapeId.Switch,
             "xaxis": xaxis,
             "zaxis": zaxis,

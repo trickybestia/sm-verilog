@@ -14,6 +14,7 @@ class BlockPlacer:
     compact: bool
     rotate_middle_gates_to_input: bool
     auto_height: bool
+    default_attachment: Union[str, None]
 
     def __init__(self) -> None:
         super().__init__()
@@ -22,6 +23,7 @@ class BlockPlacer:
         self.auto_height = True
         self.compact = False
         self.rotate_middle_gates_to_input = True
+        self.default_attachment = None
 
     def place(self, circuit: Circuit) -> Blueprint:
         blueprint = Blueprint()
@@ -40,6 +42,7 @@ class BlockPlacer:
             z: int,
             rotate_to_inputs: bool,
             color: Union[str, None] = None,
+            attachment: Union[str, None] = None,
         ):
             xaxis = None
             zaxis = None
@@ -52,6 +55,43 @@ class BlockPlacer:
             blueprint.create_gate(
                 gate_id, gate, x, y, z, color=color, xaxis=xaxis, zaxis=zaxis
             )
+
+            if attachment is not None:
+                create_attachment(gate_id, x, y, z, attachment, color)
+
+        def create_attachment(
+            gate_id: int,
+            gate_x: int,
+            gate_y: int,
+            gate_z: int,
+            attachment: str,
+            color: Union[str, None] = None,
+        ):
+            nonlocal circuit, blueprint
+
+            attachment_id = circuit.id_generator.next_single()
+
+            match attachment:
+                case "switch":
+                    blueprint.create_switch(
+                        gate_x,
+                        gate_y,
+                        gate_z,
+                        attachment_id,
+                        gate_id,
+                        color=color,
+                    )
+                case "sensor":
+                    blueprint.create_sensor(
+                        gate_x - 1,
+                        gate_y,
+                        gate_z + 1,
+                        attachment_id,
+                        gate_id,
+                        color=color,
+                    )
+                case _:
+                    raise ValueError(f"attachment with name {attachment} doesn't exist")
 
         def place_middle_logic(logic_id: int, logic: Logic, rotate_to_inputs: bool):
             nonlocal middle_gates_offset
@@ -93,31 +133,35 @@ class BlockPlacer:
             color = color_generator.next()
             blueprint.description += f"{name}: {color.name}\n"
 
-            for input_gate in input.gates:
-                blueprint.create_gate(
+            start_x = input_gates_offset
+            start_y = 0
+            start_z = 0
+
+            if input.override_x is not None:
+                start_x = input.override_x
+            else:
+                input_gates_offset += input.stripe_width
+            if input.override_y is not None:
+                start_y = input.override_y
+            if input.override_z is not None:
+                start_z = input.override_z
+
+            attachment = input.attachment
+
+            if attachment is None:
+                attachment = self.default_attachment
+
+            for i, input_gate in enumerate(input.gates):
+                create_gate(
                     input_gate.gate_id,
                     input_gate.gate,
-                    input_gates_offset,
-                    0,
-                    0,
-                    color.hex,
+                    start_x + i % input.stripe_width,
+                    start_y,
+                    start_z + i // input.stripe_width,
+                    input.rotate_to_inputs,
+                    color=color.hex,
+                    attachment=attachment,
                 )
-                blueprint.create_solid(
-                    ShapeId.Concrete, input_gates_offset, -2, 0, color.hex
-                )
-                blueprint.create_switch(
-                    input_gates_offset,
-                    -2,
-                    1,
-                    circuit.id_generator.next_single(),
-                    input_gate.gate_id,
-                    color.hex,
-                )
-
-                input_gates_offset += 1
-
-        if input_gates_offset != 0:
-            blueprint.create_solid(ShapeId.Concrete, 0, -1, 0)
 
         color_generator.reset()
 
@@ -135,12 +179,15 @@ class BlockPlacer:
             blueprint.description += f"{name}: {color.name}\n"
 
             start_x = output_gates_offset
+            start_y = 1
             start_z = 0
 
             if output.override_x is not None:
                 start_x = output.override_x
             else:
                 output_gates_offset += output.stripe_width
+            if output.override_y is not None:
+                start_y = output.override_y
             if output.override_z is not None:
                 start_z = output.override_z
 
@@ -149,7 +196,7 @@ class BlockPlacer:
                     output_gate.gate_id,
                     output_gate.gate,
                     start_x + i % output.stripe_width,
-                    1,
+                    start_y,
                     start_z + i // output.stripe_width,
                     output.rotate_to_inputs,
                     color=color.hex,
