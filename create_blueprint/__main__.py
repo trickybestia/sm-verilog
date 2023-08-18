@@ -28,7 +28,7 @@ def existing_path(s: str) -> Path:
 
 def main():
     parser = argparse.ArgumentParser(
-        prog="create-blueprint",
+        prog="create_blueprint",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
