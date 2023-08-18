@@ -1,11 +1,12 @@
 from typing import Union
 
+from .logic import Logic
 from .timer import Timer
 from .gate import Gate
 from .shapes import ShapeId
 from .color_generator import ColorGenerator
 from .blueprint import Blueprint
-from .circuit import Circuit
+from .circuit import Circuit, Port
 
 
 class BlockPlacer:
@@ -26,58 +27,14 @@ class BlockPlacer:
         blueprint = Blueprint()
         color_generator = ColorGenerator()
 
-        if len(circuit.inputs) != 0:
-            blueprint.create_solid(ShapeId.Concrete, 0, -1, 0)
-
-        blueprint.description += "Inputs (first is left):\n\n"
-
-        input_gates_offset = 0
-
-        for name, output in circuit.inputs.items():
-            color = color_generator.next()
-            blueprint.description += f"{name}: {color.name}\n"
-
-            for port in output:
-                blueprint.create_gate(
-                    port.gate_id, port.gate, input_gates_offset, 0, 0, color.hex
-                )
-                blueprint.create_solid(
-                    ShapeId.Concrete, input_gates_offset, -2, 0, color.hex
-                )
-                blueprint.create_switch(
-                    input_gates_offset,
-                    -2,
-                    1,
-                    circuit.id_generator.next_single(),
-                    port.gate_id,
-                    color.hex,
-                )
-
-                input_gates_offset += 1
-
-        color_generator.reset()
-
-        blueprint.description += "\nOutputs (first is left):\n\n"
-
-        output_gates_offset = 0
-
-        for name, output in circuit.outputs.items():
-            color = color_generator.next()
-            blueprint.description += f"{name}: {color.name}\n"
-
-            for port in output.ports:
-                blueprint.create_gate(
-                    port.gate_id, port.gate, output_gates_offset, 1, 0, color.hex
-                )
-
-                output_gates_offset += 1
-
         if self.auto_height:
             self.height = int(len(circuit.middle_logic) ** 0.5)
 
         middle_gates_offset = 0
 
-        for logic_id, logic in circuit.middle_logic.items():
+        def place_middle_logic(logic_id: int, logic: Logic):
+            nonlocal middle_gates_offset
+
             x = middle_gates_offset // self.height
             y = 2
             z = middle_gates_offset % self.height
@@ -117,5 +74,78 @@ class BlockPlacer:
 
             if not self.compact:
                 middle_gates_offset += 1
+
+        def place_port_in_middle(port: Port):
+            for port_gate in port.gates:
+                place_middle_logic(port_gate.gate_id, port_gate.gate)
+
+        blueprint.description += "Inputs (first is left):\n\n"
+
+        input_gates_offset = 0
+
+        for name, input in circuit.inputs.items():
+            if input.hide:
+                place_port_in_middle(input)
+
+                continue
+
+            color = color_generator.next()
+            blueprint.description += f"{name}: {color.name}\n"
+
+            for input_gate in input.gates:
+                blueprint.create_gate(
+                    input_gate.gate_id,
+                    input_gate.gate,
+                    input_gates_offset,
+                    0,
+                    0,
+                    color.hex,
+                )
+                blueprint.create_solid(
+                    ShapeId.Concrete, input_gates_offset, -2, 0, color.hex
+                )
+                blueprint.create_switch(
+                    input_gates_offset,
+                    -2,
+                    1,
+                    circuit.id_generator.next_single(),
+                    input_gate.gate_id,
+                    color.hex,
+                )
+
+                input_gates_offset += 1
+
+        if input_gates_offset != 0:
+            blueprint.create_solid(ShapeId.Concrete, 0, -1, 0)
+
+        color_generator.reset()
+
+        blueprint.description += "\nOutputs (first is left):\n\n"
+
+        output_gates_offset = 0
+
+        for name, output in circuit.outputs.items():
+            if output.hide:
+                place_port_in_middle(output)
+
+                continue
+
+            color = color_generator.next()
+            blueprint.description += f"{name}: {color.name}\n"
+
+            for output_gate in output.gates:
+                blueprint.create_gate(
+                    output_gate.gate_id,
+                    output_gate.gate,
+                    output_gates_offset,
+                    1,
+                    0,
+                    color.hex,
+                )
+
+                output_gates_offset += 1
+
+        for logic_id, logic in circuit.middle_logic.items():
+            place_middle_logic(logic_id, logic)
 
         return blueprint

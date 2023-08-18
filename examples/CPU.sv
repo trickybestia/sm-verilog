@@ -14,7 +14,9 @@
 
 module CPU
 (
+    (* hide *)
     input UInt8 i_ptr_i, a_i, b_i, o1_i, o2_i,
+    (* hide *)
     input bit halt_i,
     input UInt8 i1, i2,
     input bit [63:0] i_mem,

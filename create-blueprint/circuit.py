@@ -12,23 +12,33 @@ from .net import Net
 
 
 @dataclass
-class PortData:
+class PortGate:
     bit: int
     gate_id: int
     gate: Gate
 
 
 @dataclass
-class OutputInfo:
-    ports: list[PortData]
+class Port:
+    gates: list[PortGate]
+    hide: bool
+
+
+@dataclass
+class Input(Port):
+    ...
+
+
+@dataclass
+class Output(Port):
     connect_to: Union[str, None]
 
 
 class Circuit:
     all_logic: dict[int, Logic]  # Logic ID -> Logic
     middle_logic: dict[int, Logic]  # Logic ID -> Logic
-    inputs: dict[str, list[PortData]]
-    outputs: dict[str, OutputInfo]
+    inputs: dict[str, Input]
+    outputs: dict[str, Output]
     id_generator: GateIdGenerator
     output_ready_time: int
 
@@ -78,6 +88,11 @@ class Circuit:
 
             match port["direction"]:
                 case "input":
+                    hide = "hide" in netnames[port_name]["attributes"]
+
+                    input = Input([], hide)
+                    c.inputs[port_name] = input
+
                     for bit in port_bits:
                         gate_id = c.id_generator.next_single()
                         gate = Gate()
@@ -85,9 +100,7 @@ class Circuit:
                         gate.mode = GateMode.OR
 
                         c.all_logic[gate_id] = gate
-                        get_or_insert(c.inputs, port_name, lambda: []).append(
-                            PortData(bit, gate_id, gate)
-                        )
+                        input.gates.append(PortGate(bit, gate_id, gate))
 
                         get_net(bit).input = gate_id
                 case "output":
@@ -96,15 +109,17 @@ class Circuit:
                     if "connect_to" in netnames[port_name]["attributes"]:
                         connect_to = netnames[port_name]["attributes"]["connect_to"]
 
-                    output_info = OutputInfo([], connect_to)
-                    c.outputs[port_name] = output_info
+                    hide = "hide" in netnames[port_name]["attributes"]
+
+                    output = Output([], hide, connect_to)
+                    c.outputs[port_name] = output
 
                     for bit in port_bits:
                         gate_id = c.id_generator.next_single()
                         gate = Gate()
 
                         c.all_logic[gate_id] = gate
-                        output_info.ports.append(PortData(bit, gate_id, gate))
+                        output.gates.append(PortGate(bit, gate_id, gate))
 
                         match bit:
                             case "0":
@@ -151,18 +166,18 @@ class Circuit:
             if output.connect_to:
                 input = self.inputs[output.connect_to]
 
-                if len(input) != len(output.ports):
+                if len(input.gates) != len(output.gates):
                     raise Exception(
                         f"input ({output.connect_to}) and output ({output_name}) bound via connect_to attribute must have same size"
                     )
 
-                for i in range(len(input)):
-                    input[i].gate.inputs.append(output.ports[i].gate_id)
-                    output.ports[i].gate.outputs.append(input[i].gate_id)
+                for i in range(len(input.gates)):
+                    input.gates[i].gate.inputs.append(output.gates[i].gate_id)
+                    output.gates[i].gate.outputs.append(input.gates[i].gate_id)
 
     def _compute_output_ready_time(self):
-        def get_output_ready_time(gate_id: int) -> int:
-            logic = self.all_logic[gate_id]
+        def get_output_ready_time(logic_id: int) -> int:
+            logic = self.all_logic[logic_id]
 
             if logic.output_ready_time is None:
                 arrival_times = list(
@@ -179,19 +194,22 @@ class Circuit:
             return logic.output_ready_time
 
         for input in self.inputs.values():
-            for input_port_data in input:
-                input_port_data.gate.output_ready_time = 0
+            for input_gate in input.gates:
+                input_gate.gate.output_ready_time = 0
+
+        for logic_id in self.middle_logic:
+            get_output_ready_time(logic_id)
 
         for output in self.outputs.values():
-            for output_port_data in output.ports:
+            for output_gate in output.gates:
                 self.output_ready_time = max(
                     self.output_ready_time,
-                    get_output_ready_time(output_port_data.gate_id),
+                    get_output_ready_time(output_gate.gate_id),
                 )
 
         for output in self.outputs.values():
-            for output_port_data in output.ports:
-                output_port_data.gate.output_ready_time = self.output_ready_time
+            for output_gate in output.gates:
+                output_gate.gate.output_ready_time = self.output_ready_time
 
     def _insert_buffers(self):
         buffers: list[Tuple[int, Logic]] = []
