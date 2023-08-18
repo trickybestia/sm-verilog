@@ -19,7 +19,7 @@ class BlockPlacer:
     def __init__(self) -> None:
         super().__init__()
 
-        self.height = None
+        self.height = 1
         self.auto_height = True
         self.compact = False
         self.rotate_middle_gates_to_input = True

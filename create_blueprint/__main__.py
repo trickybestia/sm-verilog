@@ -108,7 +108,8 @@ def main():
 
     block_placer = BlockPlacer()
 
-    block_placer.height = args.height
+    if args.height is not None:
+        block_placer.height = args.height
     block_placer.auto_height = args.auto_height
     block_placer.compact = args.compact
     block_placer.rotate_middle_gates_to_input = args.rotate_middle_gates_to_input
