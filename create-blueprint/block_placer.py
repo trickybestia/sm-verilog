@@ -32,52 +32,53 @@ class BlockPlacer:
 
         middle_gates_offset = 0
 
-        def place_middle_logic(logic_id: int, logic: Logic):
+        def create_gate(
+            gate_id: int,
+            gate: Gate,
+            x: int,
+            y: int,
+            z: int,
+            rotate_to_inputs: bool,
+            color: Union[str, None] = None,
+        ):
+            xaxis = None
+            zaxis = None
+
+            if rotate_to_inputs:
+                y += 1
+                xaxis = -1
+                zaxis = 0
+
+            blueprint.create_gate(
+                gate_id, gate, x, y, z, color=color, xaxis=xaxis, zaxis=zaxis
+            )
+
+        def place_middle_logic(logic_id: int, logic: Logic, rotate_to_inputs: bool):
             nonlocal middle_gates_offset
 
             x = middle_gates_offset // self.height
             y = 2
             z = middle_gates_offset % self.height
-            xaxis = None
-            zaxis = None
 
-            if self.rotate_middle_gates_to_input:
+            if rotate_to_inputs:
+                z += 1
+
                 if middle_gates_offset % self.height == 0:
                     blueprint.create_solid(ShapeId.Concrete, x, y, 0)
 
             if isinstance(logic, Gate):
-                if self.rotate_middle_gates_to_input:
-                    y += 1
-                    z += 1
-                    xaxis = -1
-                    zaxis = 0
-
-                blueprint.create_gate(
-                    logic_id,
-                    logic,
-                    x,
-                    y,
-                    z,
-                    xaxis=xaxis,
-                    zaxis=zaxis,
-                )
+                create_gate(logic_id, logic, x, y, z, rotate_to_inputs)
             elif isinstance(logic, Timer):
-                blueprint.create_timer(
-                    logic_id,
-                    logic,
-                    x,
-                    y,
-                    z,
-                    xaxis=xaxis,
-                    zaxis=zaxis,
-                )
+                blueprint.create_timer(logic_id, logic, x, y, z)
 
             if not self.compact:
                 middle_gates_offset += 1
 
         def place_port_in_middle(port: Port):
             for port_gate in port.gates:
-                place_middle_logic(port_gate.gate_id, port_gate.gate)
+                place_middle_logic(
+                    port_gate.gate_id, port_gate.gate, self.rotate_middle_gates_to_input
+                )
 
         blueprint.description += "Inputs (first is left):\n\n"
 
@@ -133,19 +134,28 @@ class BlockPlacer:
             color = color_generator.next()
             blueprint.description += f"{name}: {color.name}\n"
 
-            for output_gate in output.gates:
-                blueprint.create_gate(
+            start_x = output_gates_offset
+            start_z = 0
+
+            if output.override_x is not None:
+                start_x = output.override_x
+            else:
+                output_gates_offset += output.stripe_width
+            if output.override_z is not None:
+                start_z = output.override_z
+
+            for i, output_gate in enumerate(output.gates):
+                create_gate(
                     output_gate.gate_id,
                     output_gate.gate,
-                    output_gates_offset,
+                    start_x + i % output.stripe_width,
                     1,
-                    0,
-                    color.hex,
+                    start_z + i // output.stripe_width,
+                    output.rotate_to_inputs,
+                    color=color.hex,
                 )
 
-                output_gates_offset += 1
-
         for logic_id, logic in circuit.middle_logic.items():
-            place_middle_logic(logic_id, logic)
+            place_middle_logic(logic_id, logic, self.rotate_middle_gates_to_input)
 
         return blueprint

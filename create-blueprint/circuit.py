@@ -22,6 +22,7 @@ class PortGate:
 class Port:
     gates: list[PortGate]
     hide: bool
+    rotate_to_inputs: bool
 
 
 @dataclass
@@ -32,6 +33,9 @@ class Input(Port):
 @dataclass
 class Output(Port):
     connect_to: Union[str, None]
+    stripe_width: int
+    override_x: Union[int, None]
+    override_z: Union[int, None]
 
 
 class Circuit:
@@ -86,11 +90,12 @@ class Circuit:
             port = ports[port_name]
             port_bits = port["bits"]
 
+            hide = "hide" in netnames[port_name]["attributes"]
+            rotate_to_inputs = "rotate_to_inputs" in netnames[port_name]["attributes"]
+
             match port["direction"]:
                 case "input":
-                    hide = "hide" in netnames[port_name]["attributes"]
-
-                    input = Input([], hide)
+                    input = Input([], hide, rotate_to_inputs)
                     c.inputs[port_name] = input
 
                     for bit in port_bits:
@@ -105,13 +110,34 @@ class Circuit:
                         get_net(bit).input = gate_id
                 case "output":
                     connect_to: Union[str, None] = None
+                    stripe_width = len(port_bits)
+                    override_x: Union[int, None] = None
+                    override_z: Union[int, None] = None
 
                     if "connect_to" in netnames[port_name]["attributes"]:
                         connect_to = netnames[port_name]["attributes"]["connect_to"]
+                    if "stripe_width" in netnames[port_name]["attributes"]:
+                        stripe_width = int(
+                            netnames[port_name]["attributes"]["stripe_width"], 2
+                        )
+                    if "override_x" in netnames[port_name]["attributes"]:
+                        override_x = int(
+                            netnames[port_name]["attributes"]["override_x"], 2
+                        )
+                    if "override_z" in netnames[port_name]["attributes"]:
+                        override_z = int(
+                            netnames[port_name]["attributes"]["override_z"], 2
+                        )
 
-                    hide = "hide" in netnames[port_name]["attributes"]
-
-                    output = Output([], hide, connect_to)
+                    output = Output(
+                        [],
+                        hide,
+                        rotate_to_inputs,
+                        connect_to,
+                        stripe_width,
+                        override_x,
+                        override_z,
+                    )
                     c.outputs[port_name] = output
 
                     for bit in port_bits:
