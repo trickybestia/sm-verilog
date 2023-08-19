@@ -253,44 +253,50 @@ class Circuit:
         buffers: list[Tuple[int, Logic]] = []
 
         for gate_id, gate in self.all_logic.items():
-            for input_gate_id in gate.inputs:
-                input_gate = self.all_logic[input_gate_id]
-
-                buffer_delay = gate.output_ready_time - input_gate.output_ready_time - 1
-
-                if buffer_delay == 0:
-                    continue
-
-                buffer_id = self.id_generator.next_single()
-                buffer: Logic
-
-                if buffer_delay == 1:
-                    buffer = Gate()
-                else:
-                    buffer = Timer()
-                    buffer.ticks = buffer_delay - 1
-
-                buffers.append((buffer_id, buffer))
-
-                self._insert_logic_between_others(
-                    buffer_id, buffer, input_gate_id, input_gate, gate_id, gate
+            outputs: list[Tuple[int, int]] = sorted(
+                map(
+                    lambda output_gate_id: (
+                        self.all_logic[output_gate_id].output_ready_time
+                        - gate.output_ready_time
+                        - 1,
+                        output_gate_id,
+                    ),
+                    gate.outputs,
                 )
+            )
+
+            last_buffer_id = gate_id
+            last_buffer: Logic = gate
+            last_buffer_total_delay = 0
+
+            for required_delay, output_gate_id in outputs:
+                gate.outputs.remove(output_gate_id)
+                self.all_logic[output_gate_id].inputs.remove(gate_id)
+
+                new_buffer_delay = required_delay - last_buffer_total_delay
+
+                if new_buffer_delay != 0:
+                    buffer_id = self.id_generator.next_single()
+                    buffer: Logic
+
+                    if new_buffer_delay == 1:
+                        buffer = Gate()
+                    else:
+                        buffer = Timer()
+                        buffer.ticks = new_buffer_delay - 1
+
+                    buffers.append((buffer_id, buffer))
+
+                    last_buffer.outputs.append(buffer_id)
+                    buffer.inputs.append(last_buffer_id)
+
+                    last_buffer = buffer
+                    last_buffer_id = buffer_id
+                    last_buffer_total_delay = required_delay
+
+                last_buffer.outputs.append(output_gate_id)
+                self.all_logic[output_gate_id].inputs.append(last_buffer_id)
 
         for buffer_id, buffer in buffers:
             self.all_logic[buffer_id] = buffer
             self.middle_logic[buffer_id] = buffer
-
-    def _insert_logic_between_others(
-        self,
-        middle_logic_id: int,
-        middle_logic: Logic,
-        input_logic_id: int,
-        input_logic: Logic,
-        output_logic_id: int,
-        output_logic: Logic,
-    ):
-        replace_first(input_logic.outputs, output_logic_id, middle_logic_id)
-        replace_first(output_logic.inputs, input_logic_id, middle_logic_id)
-
-        middle_logic.inputs.append(input_logic_id)
-        middle_logic.outputs.append(output_logic_id)
