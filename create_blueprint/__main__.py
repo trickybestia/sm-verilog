@@ -95,6 +95,11 @@ def main():
         help="compact middle gates layer to one block",
         action="store_true",
     )
+    block_placer_arguments_parser.add_argument(
+        "--cubic",
+        help="give middle gates layer shape of cube",
+        action="store_true",
+    )
 
     args = parser.parse_args()
 
@@ -114,6 +119,7 @@ def main():
     block_placer.compact = args.compact
     block_placer.rotate_middle_gates_to_input = args.rotate_middle_gates_to_input
     block_placer.default_attachment = args.default_attachment
+    block_placer.cubic = args.cubic
 
     blueprint: Blueprint = block_placer.place(circuit)
 

@@ -15,6 +15,7 @@ class BlockPlacer:
     rotate_middle_gates_to_input: bool
     auto_height: bool
     default_attachment: Union[str, None]
+    cubic: bool
 
     def __init__(self) -> None:
         super().__init__()
@@ -24,6 +25,7 @@ class BlockPlacer:
         self.compact = False
         self.rotate_middle_gates_to_input = True
         self.default_attachment = None
+        self.cubic = False
 
     def place(self, circuit: Circuit) -> Blueprint:
         blueprint = Blueprint()
@@ -31,6 +33,8 @@ class BlockPlacer:
 
         if self.auto_height:
             self.height = int(len(circuit.middle_logic) ** 0.5)
+        if self.cubic:
+            self.height = int(len(circuit.middle_logic) ** (1 / 3))
 
         middle_gates_offset = 0
 
@@ -96,14 +100,23 @@ class BlockPlacer:
         def place_middle_logic(logic_id: int, logic: Logic, rotate_to_inputs: bool):
             nonlocal middle_gates_offset
 
-            x = middle_gates_offset // self.height
-            y = 2
-            z = middle_gates_offset % self.height
+            layer_offset = 0
+
+            if self.cubic:
+                layer_offset = middle_gates_offset // (self.height**2)
+
+            middle_gates_offset_in_layer = (
+                middle_gates_offset - layer_offset * self.height**2
+            )
+
+            x = middle_gates_offset_in_layer // self.height
+            y = 2 + layer_offset
+            z = middle_gates_offset_in_layer % self.height
 
             if rotate_to_inputs:
                 z += 1
 
-                if middle_gates_offset % self.height == 0:
+                if middle_gates_offset_in_layer % self.height == 0:
                     blueprint.create_solid(ShapeId.Concrete, x, y, 0)
 
             if isinstance(logic, Gate):
