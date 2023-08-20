@@ -36,7 +36,7 @@ class Input(Port):
 
 @dataclass
 class Output(Port):
-    connect_to: Union[str, None]
+    ...
 
 
 class DFF:
@@ -69,10 +69,10 @@ class Circuit:
         c = cls._from_yosys_output(cells, yosys_output, top_module)
 
         c._compute_output_ready_time()
-        c._connect_dffs()
+
         if len(c.dffs) != 0:
+            c._connect_dffs()
             c._insert_buffers()
-        c._connect_outputs_to_inputs()
 
         return c
 
@@ -147,10 +147,6 @@ class Circuit:
 
                         get_net(bit).input_logic_id = gate_id
                 case "output":
-                    connect_to: Union[str, None] = netnames[port_name][
-                        "attributes"
-                    ].get("connect_to")
-
                     output = Output(
                         [],
                         hide,
@@ -159,7 +155,6 @@ class Circuit:
                         override_x,
                         override_y,
                         override_z,
-                        connect_to,
                     )
                     c.outputs[port_name] = output
 
@@ -217,19 +212,6 @@ class Circuit:
                 c._link(net.input_logic_id, output_logic_id)
 
         return c
-
-    def _connect_outputs_to_inputs(self):
-        for output_name, output in self.outputs.items():
-            if output.connect_to:
-                input = self.inputs[output.connect_to]
-
-                if len(input.gates) != len(output.gates):
-                    raise Exception(
-                        f"input ({output.connect_to}) and output ({output_name}) bound via connect_to attribute must have same size"
-                    )
-
-                for i in range(len(input.gates)):
-                    self._link(output.gates[i].gate_id, input.gates[i].gate_id)
 
     def _connect_dffs(self):
         for dff in self.dffs:
