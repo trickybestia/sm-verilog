@@ -1,100 +1,109 @@
-`include "types.sv"
+`define OP_IO       2'd0
+`define OP_MATH     2'd1
+`define OP_IMM      2'd2
+`define OP_JUMP     2'd3
 
-/*
-1 - jump (addr)
-2 - store (value) // a = value
-3 - add // a = a + b
-4 - sub // a = a - b
-5 - read_i1 // a = i1
-6 - read_i2 // a = i2
-7 - write_o1 // o1 = a
-8 - write_o2 // o2 = a
-9 - swap // a, b = b, a
-*/
+`define IO_READ     1'b0
+`define IO_WRITE    1'b1
+
+`define MATH_OP_ADD 1'b0
+`define MATH_OP_SUB 1'b1
 
 module CPU
 (
-    (* hide *)
-    input UInt8 i_ptr_i, a_i, b_i, o1_i, o2_i,
-    (* hide *)
-    input bit halt_i,
-    input UInt8 i1, i2,
-    input bit [63:0] i_mem,
-    input rst,
-    (* connect_to="i_ptr_i" *)
-    output UInt8 i_ptr,
-    (* connect_to="a_i" *)
-    output UInt8 a,
-    (* connect_to="b_i" *)
-    output UInt8 b,
-    (* connect_to="o1_i" *)
-    output UInt8 o1,
-    (* connect_to="o2_i" *)
-    output UInt8 o2,
-    (* connect_to="halt_i" *)
-    output bit halt
+    input bit clk, rst,
+
+    output reg halt,
+
+    output reg [7:0] pc,
+
+    (* rotate_to_inputs, stripe_width=8, override_x=1, override_y=1, override_z=3 *)
+    input  bit [2*8-1:0] inputs,
+
+    (* rotate_to_inputs, stripe_width=8, override_x=1, override_y=1, override_z=6 *)
+    output reg [2*8-1:0] outputs,
+
+    (* rotate_to_inputs, stripe_width=8, override_x=10, override_y=1, override_z=3 *)
+    output reg [4*8-1:0] regs,
+
+    input  bit [15:0]    mem_value,
+
+    output reg [7:0]     mem_address
 );
-    always begin
-        i_ptr = i_ptr_i;
-        a = a_i;
-        b = b_i;
-        o1 = o1_i;
-        o2 = o2_i;
-        halt = halt_i;
+    bit [15:0] instruction = mem_value;
+    
+    bit [1:0]  opcode      = instruction[1:0];
+    bit [1:0]  rs1         = instruction[3:2];
+    bit [1:0]  rs2         = instruction[5:4];
+    bit [1:0]  rd          = instruction[7:6];
+    bit [7:0]  value       = instruction[15:8];
+
+    bit        math_opcode = instruction[15];
+
+    bit [7:0]  rs1_val     = regs[rs1*8+:8];
+    bit [7:0]  rs2_val     = regs[rs2*8+:8];
+
+    bit        io_opcode   = instruction[4];
+    bit        io_target   = instruction[5];
+
+    bit [7:0]  pc_result;
+    bit [7:0]  rd_val;
+    bit        write_rd;
+
+    function bit [7:0] op_math();
+        case (math_opcode)
+            `MATH_OP_ADD: op_math = rs1_val + rs2_val;
+            `MATH_OP_SUB: op_math = rs1_val - rs2_val;
+        endcase
+    endfunction
+
+    always @(posedge clk) begin
+        rd_val = 0;
+        write_rd = 0;
+        pc_result = 0;
 
         if (rst) begin
-            i_ptr = 0;
-            a = 0;
-            b = 0;
-            o1 = 0;
-            o2 = 0;
+            pc = 0;
+            outputs = 0;
             halt = 0;
-        end else if (!halt)       
-            case (i_mem[i_ptr*8+:8])
-                1: i_ptr = i_mem[(i_ptr+1)*8+:8];
-                2: begin
-                    a = i_mem[(i_ptr+1)*8+:8];
+            regs = 0;
+            mem_address = 0;
+        end else if (!halt) begin
+            pc_result = pc + 1;
 
-                    i_ptr += 2;
+            case (opcode)
+                `OP_IO: begin
+                    case (io_opcode)
+                        `IO_READ: begin
+                            rd_val = inputs[io_target*8+:8];
+                            write_rd = 1;
+                        end
+                        `IO_WRITE: begin
+                            outputs[io_target*8+:8] = rs1_val;
+                        end
+                    endcase
                 end
-                3: begin
-                    a += b;
+                `OP_MATH: begin
+                    rd_val = op_math();
+                    write_rd = 1;
 
-                    i_ptr++;
+                    pc_result = pc + 2;
                 end
-                4: begin
-                    a -= b;
+                `OP_IMM: begin
+                    rd_val = value;
+                    write_rd = 1;
 
-                    i_ptr++;
+                    pc_result = pc + 2;
                 end
-                5: begin
-                    a = i1;
-
-                    i_ptr++;
-                end
-                6: begin
-                    a = i2;
-
-                    i_ptr++;
-                end
-                7: begin
-                    o1 = a;
-
-                    i_ptr++;
-                end
-                8: begin
-                    o2 = a;
-
-                    i_ptr++;
-                end
-                9: begin
-                    {a, b} = {b, a};
-
-                    i_ptr++;
-                end
-                default: begin
-                    halt = 1;
-                end
+                `OP_JUMP: pc_result = value;
             endcase
+
+            if (!halt) begin
+                if (write_rd) regs[rd*8+:8] = rd_val;
+
+                pc = pc_result;
+                mem_address = pc;
+            end
+        end
     end
 endmodule
