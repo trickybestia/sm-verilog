@@ -37,10 +37,13 @@ def main():
 
     bit_offset = 0
 
+    bit_rows = []
+
     for byte in args.file.read_bytes():
-        for i in range(8):
+        for _ in range(8):
             bit = byte & 1
             byte >>= 1
+
             block_color = ONE_BIT_COLOR if bit else ZERO_BIT_COLOR
 
             x = bit_offset
@@ -52,9 +55,16 @@ def main():
 
             blueprint.create_solid(ShapeId.Concrete, x, 0, z, color=block_color)
 
+            if x == 0:
+                bit_rows.append("")
+
+            bit_rows[-1] += str(bit)
+
             bit_offset += 1
 
     blueprint.save(args.blueprints_path / args.file.name)
+
+    print(*bit_rows[::-1], sep="\n")
 
 
 main()
