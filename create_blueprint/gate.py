@@ -19,10 +19,10 @@ class GateMode(IntEnum):
 class Gate(Logic):
     mode: GateMode
 
-    def __init__(self) -> None:
+    def __init__(self, mode: GateMode = GateMode.AND) -> None:
         super().__init__()
 
-        self.mode = GateMode.AND
+        self.mode = mode
 
     def compute_output_ready_time(self, max_arrival_time: int):
         self.output_ready_time = max_arrival_time + 1

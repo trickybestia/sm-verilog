@@ -69,7 +69,7 @@ class BlockPlacer:
         ):
             nonlocal circuit, blueprint
 
-            attachment_id = circuit.id_generator.next_single()
+            attachment_id = circuit.id_generator.next()
 
             match attachment:
                 case "switch":

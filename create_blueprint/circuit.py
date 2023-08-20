@@ -1,12 +1,12 @@
 from dataclasses import dataclass
-from typing import Self, Tuple, Union
+from typing import Literal, Self, Tuple, TypeVar, Union
 import json
 
 from .timer import Timer
 from .logic import Logic
 from .cell import Cell
 from .gate import Gate, GateMode
-from .utils import get_or_insert, replace_first
+from .utils import get_or_insert
 from .gate_id_generator import GateIdGenerator
 from .net import Net
 
@@ -39,7 +39,19 @@ class Output(Port):
     connect_to: Union[str, None]
 
 
+class DFF:
+    output_id: Union[int, None]
+    clk_id: Union[int, None]
+    clk_and_data_id: Union[int, None]
+
+    def __init__(self) -> None:
+        self.clk_id = None
+        self.clk_and_data_id = None
+        self.output_id = None
+
+
 class Circuit:
+    dffs: list[DFF]
     all_logic: dict[int, Logic]  # Logic ID -> Logic
     middle_logic: dict[int, Logic]  # Logic ID -> Logic
     inputs: dict[str, Input]
@@ -57,12 +69,14 @@ class Circuit:
         c = cls._from_yosys_output(cells, yosys_output, top_module)
 
         c._compute_output_ready_time()
+        c._connect_dffs()
         c._insert_buffers()
         c._connect_outputs_to_inputs()
 
         return c
 
     def __init__(self) -> None:
+        self.dffs = []
         self.all_logic = {}
         self.middle_logic = {}
         self.inputs = {}
@@ -126,15 +140,11 @@ class Circuit:
                     c.inputs[port_name] = input
 
                     for bit in port_bits:
-                        gate_id = c.id_generator.next_single()
-                        gate = Gate()
+                        gate_id, gate = c._create_logic(Gate(GateMode.OR), None)
 
-                        gate.mode = GateMode.OR
-
-                        c.all_logic[gate_id] = gate
                         input.gates.append(PortGate(bit, gate_id, gate))
 
-                        get_net(bit).input = gate_id
+                        get_net(bit).input_logic_id = gate_id
                 case "output":
                     connect_to: Union[str, None] = netnames[port_name][
                         "attributes"
@@ -153,10 +163,8 @@ class Circuit:
                     c.outputs[port_name] = output
 
                     for bit in port_bits:
-                        gate_id = c.id_generator.next_single()
-                        gate = Gate()
+                        gate_id, gate = c._create_logic(Gate(), None)
 
-                        c.all_logic[gate_id] = gate
                         output.gates.append(PortGate(bit, gate_id, gate))
 
                         match bit:
@@ -165,37 +173,47 @@ class Circuit:
                             case "1":
                                 gate.mode = GateMode.NAND
 
-                                input_gate_id = c.id_generator.next_single()
-                                input_gate = Gate()
+                                input_gate_id, _ = c._create_logic(Gate(), "middle")
 
-                                c.all_logic[input_gate_id] = input_gate
-                                c.middle_logic[input_gate_id] = input_gate
-
-                                input_gate.outputs.append(gate_id)
+                                c._link(input_gate_id, gate_id)
                             case _:
-                                get_net(bit).outputs.append(gate_id)
+                                get_net(bit).output_logic_ids.append(gate_id)
 
         for cell in module["cells"].values():
-            gate_id = c.id_generator.next_single()
-            gate = Gate()
-
-            c.all_logic[gate_id] = gate
-            c.middle_logic[gate_id] = gate
-
             connections = cell["connections"]
 
-            cell_info = cells[cell["type"]]
+            match cell["type"]:
+                case "DFF":
+                    dff = DFF()
+                    c.dffs.append(dff)
 
-            gate.mode = cell_info.mode
-            get_net(connections[cell_info.output][0]).input = gate_id
+                    dff.output_id, _ = c._create_logic(Gate(GateMode.NAND), "middle")
+                    dff.clk_id, _ = c._create_logic(Gate(GateMode.OR), "middle")
+                    dff.clk_and_data_id, _ = c._create_logic(
+                        Gate(GateMode.AND), "middle"
+                    )
 
-            for input in cell_info.inputs:
-                get_net(connections[input][0]).outputs.append(gate_id)
+                    get_net(connections["C"][0]).output_logic_ids.extend(
+                        (dff.clk_id, dff.clk_and_data_id)
+                    )
+                    get_net(connections["D"][0]).output_logic_ids.append(
+                        dff.clk_and_data_id
+                    )
+                    get_net(connections["Q"][0]).input_logic_id = dff.output_id
+                case _:
+                    gate_id, gate = c._create_logic(Gate(), "middle")
+
+                    cell_info = cells[cell["type"]]
+
+                    gate.mode = cell_info.mode
+                    get_net(connections[cell_info.output][0]).input_logic_id = gate_id
+
+                    for input in cell_info.inputs:
+                        get_net(connections[input][0]).output_logic_ids.append(gate_id)
 
         for net in nets.values():
-            for output in net.outputs:
-                c.all_logic[output].inputs.append(net.input)
-                c.all_logic[net.input].outputs.append(output)
+            for output_logic_id in net.output_logic_ids:
+                c._link(net.input_logic_id, output_logic_id)
 
         return c
 
@@ -210,8 +228,31 @@ class Circuit:
                     )
 
                 for i in range(len(input.gates)):
-                    input.gates[i].gate.inputs.append(output.gates[i].gate_id)
-                    output.gates[i].gate.outputs.append(input.gates[i].gate_id)
+                    self._link(output.gates[i].gate_id, input.gates[i].gate_id)
+
+    def _connect_dffs(self):
+        for dff in self.dffs:
+            clk = self.all_logic[dff.clk_id]
+            clk_and_data = self.all_logic[dff.clk_and_data_id]
+            output = self.all_logic[dff.output_id]
+
+            output_ready_time = max(
+                clk.output_ready_time, clk_and_data.output_ready_time
+            )
+
+            clk.output_ready_time = output_ready_time
+            clk_and_data.output_ready_time = output_ready_time
+
+            loop_gate_id, loop_gate = self._create_logic(Gate(GateMode.NOR), "middle")
+
+            loop_gate.output_ready_time = output_ready_time + 2
+            output.output_ready_time = None
+
+            self._link(dff.clk_and_data_id, loop_gate_id)
+
+            self._link(dff.clk_id, dff.output_id)
+            self._link(dff.output_id, loop_gate_id)
+            self._link(loop_gate_id, dff.clk_id)
 
     def _compute_output_ready_time(self):
         def get_output_ready_time(logic_id: int) -> int:
@@ -253,6 +294,9 @@ class Circuit:
         buffers: list[Tuple[int, Logic]] = []
 
         for gate_id, gate in self.all_logic.items():
+            if gate.output_ready_time is None:
+                continue
+
             outputs: list[Tuple[int, int]] = sorted(
                 map(
                     lambda output_gate_id: (
@@ -261,7 +305,13 @@ class Circuit:
                         - 1,
                         output_gate_id,
                     ),
-                    gate.outputs,
+                    filter(
+                        lambda output_gate_id: self.all_logic[
+                            output_gate_id
+                        ].output_ready_time
+                        is not None,
+                        gate.outputs,
+                    ),
                 )
             )
 
@@ -270,20 +320,14 @@ class Circuit:
             last_buffer_total_delay = 0
 
             for required_delay, output_gate_id in outputs:
-                gate.outputs.remove(output_gate_id)
-                self.all_logic[output_gate_id].inputs.remove(gate_id)
+                self._unlink(gate_id, output_gate_id)
 
                 new_buffer_delay = required_delay - last_buffer_total_delay
 
-                if new_buffer_delay != 0:
-                    buffer_id = self.id_generator.next_single()
-                    buffer: Logic
+                if new_buffer_delay > 0:
+                    buffer_id = self.id_generator.next()
 
-                    if new_buffer_delay == 1:
-                        buffer = Gate()
-                    else:
-                        buffer = Timer()
-                        buffer.ticks = new_buffer_delay - 1
+                    buffer = Timer(new_buffer_delay - 1)
 
                     buffers.append((buffer_id, buffer))
 
@@ -300,3 +344,28 @@ class Circuit:
         for buffer_id, buffer in buffers:
             self.all_logic[buffer_id] = buffer
             self.middle_logic[buffer_id] = buffer
+
+    _L = TypeVar("_L")
+
+    def _create_logic(
+        self,
+        logic: _L,
+        kind: Union[Literal["middle"], None],
+    ) -> Tuple[int, _L]:
+        logic_id = self.id_generator.next()
+
+        self.all_logic[logic_id] = logic
+
+        match kind:
+            case "middle":
+                self.middle_logic[logic_id] = logic
+
+        return logic_id, logic
+
+    def _link(self, input_logic_id: int, output_logic_id: int):
+        self.all_logic[input_logic_id].outputs.append(output_logic_id)
+        self.all_logic[output_logic_id].inputs.append(input_logic_id)
+
+    def _unlink(self, input_logic_id: int, output_logic_id: int):
+        self.all_logic[input_logic_id].outputs.remove(output_logic_id)
+        self.all_logic[output_logic_id].inputs.remove(input_logic_id)

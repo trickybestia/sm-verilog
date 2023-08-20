@@ -22,7 +22,15 @@ def _create_gate_formula(mode: GateMode, inputs: list[str]) -> str:
 
 
 def _create_cells_liberty(cells: dict[str, Cell]) -> str:
-    result = "library(scrap_mechanic_cells) {\n"
+    result = """library(scrap_mechanic_cells) {
+\tcell(DFF) {
+\t\tff(IQ, IQN) { clocked_on: C; next_state: D; }
+\t\tpin(C) { direction: input; clock: true; }
+\t\tpin(D) { direction: input; }
+\t\tpin(Q) { direction: output; function: "IQ"; }
+\t}
+
+"""
 
     for name, cell in cells.items():
         result += f"\tcell({name}) {{\n"
@@ -40,7 +48,7 @@ def _create_cells_liberty(cells: dict[str, Cell]) -> str:
 
 
 def _create_cells_verilog(cells: dict[str, Cell]) -> str:
-    result = ""
+    result = "module DFF(input C, input D, output reg Q);\nendmodule\n\n"
 
     for name, cell in cells.items():
         result += f"module {name}({', '.join([f'input {input}' for input in cell.inputs] + [f'output {cell.output}'])});\n"
@@ -56,6 +64,7 @@ def _create_yosys_script(
     return f"""
 read_verilog -sv {" ".join(f'"{file}"' for file in files)}
 synth -flatten -top {top_module}
+dfflibmap -liberty scrap_mechanic_cells.lib
 abc -liberty scrap_mechanic_cells.lib
 opt
 {f"show -lib scrap_mechanic_cells.sv {top_module}" if show else ""}

@@ -2,9 +2,9 @@ from typing import Union
 
 
 class Net:
-    input: Union[int, None]
-    outputs: list[int]
+    input_logic_id: Union[int, None]
+    output_logic_ids: list[int]
 
     def __init__(self) -> None:
-        self.input = None
-        self.outputs = []
+        self.input_logic_id = None
+        self.output_logic_ids = []

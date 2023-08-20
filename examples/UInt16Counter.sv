@@ -1,14 +1,10 @@
 `include "types.sv"
 
 module UInt16Counter(
-    input UInt16 counter_i,
-    input rst,
-    (* connect_to="counter_i" *)
-    output UInt16 counter
+    input bit clk, rst,
+    output reg [15:0] counter
 );
-    always begin
-        counter = counter_i;
-
+    always @(posedge clk) begin
         if (rst)
             counter = '0;
         else

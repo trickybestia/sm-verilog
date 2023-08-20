@@ -8,10 +8,10 @@ class Timer(Logic):
 
     ticks: int
 
-    def __init__(self) -> None:
+    def __init__(self, ticks: int = 0) -> None:
         super().__init__()
 
-        self.ticks = 0
+        self.ticks = ticks
 
     def compute_output_ready_time(self, max_arrival_time: int):
         self.output_ready_time = max_arrival_time + self.ticks
