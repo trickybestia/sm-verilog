@@ -70,7 +70,8 @@ class Circuit:
 
         c._compute_output_ready_time()
         c._connect_dffs()
-        c._insert_buffers()
+        if len(c.dffs) != 0:
+            c._insert_buffers()
         c._connect_outputs_to_inputs()
 
         return c
