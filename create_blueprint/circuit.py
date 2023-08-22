@@ -41,13 +41,15 @@ class Output(Port):
 
 class DFF:
     output_id: Union[int, None]
-    clk_id: Union[int, None]
+    not_data_id: Union[int, None]
     clk_and_data_id: Union[int, None]
+    clk_and_not_data_id: Union[int, None]
 
     def __init__(self) -> None:
-        self.clk_id = None
-        self.clk_and_data_id = None
         self.output_id = None
+        self.not_data_id = None
+        self.clk_and_data_id = None
+        self.clk_and_not_data_id = None
 
 
 class Circuit:
@@ -184,16 +186,21 @@ class Circuit:
                     c.dffs.append(dff)
 
                     dff.output_id, _ = c._create_logic(Gate(GateMode.NAND), "middle")
-                    dff.clk_id, _ = c._create_logic(Gate(GateMode.OR), "middle")
                     dff.clk_and_data_id, _ = c._create_logic(
                         Gate(GateMode.AND), "middle"
                     )
+                    dff.not_data_id, _ = c._create_logic(Gate(GateMode.NAND), "middle")
+                    dff.clk_and_not_data_id, _ = c._create_logic(
+                        Gate(GateMode.AND), "middle"
+                    )
+
+                    c._link(dff.not_data_id, dff.clk_and_not_data_id)
 
                     get_net(connections["C"][0]).output_logic_ids.extend(
-                        (dff.clk_id, dff.clk_and_data_id)
+                        (dff.clk_and_data_id, dff.clk_and_not_data_id)
                     )
-                    get_net(connections["D"][0]).output_logic_ids.append(
-                        dff.clk_and_data_id
+                    get_net(connections["D"][0]).output_logic_ids.extend(
+                        (dff.clk_and_data_id, dff.not_data_id)
                     )
                     get_net(connections["Q"][0]).input_logic_id = dff.output_id
                 case _:
@@ -215,27 +222,28 @@ class Circuit:
 
     def _connect_dffs(self):
         for dff in self.dffs:
-            clk = self.all_logic[dff.clk_id]
             clk_and_data = self.all_logic[dff.clk_and_data_id]
+            clk_and_not_data = self.all_logic[dff.clk_and_not_data_id]
             output = self.all_logic[dff.output_id]
 
             output_ready_time = max(
-                clk.output_ready_time, clk_and_data.output_ready_time
+                clk_and_data.output_ready_time, clk_and_not_data.output_ready_time
             )
 
-            clk.output_ready_time = output_ready_time
             clk_and_data.output_ready_time = output_ready_time
+            clk_and_not_data.output_ready_time = output_ready_time
 
-            loop_gate_id, loop_gate = self._create_logic(Gate(GateMode.NOR), "middle")
+            reset_loop_gate_id, _ = self._create_logic(Gate(GateMode.OR), "middle")
+            set_loop_gate_id, _ = self._create_logic(Gate(GateMode.NOR), "middle")
 
-            loop_gate.output_ready_time = output_ready_time + 2
             output.output_ready_time = None
 
-            self._link(dff.clk_and_data_id, loop_gate_id)
+            self._link(dff.clk_and_data_id, set_loop_gate_id)
+            self._link(dff.clk_and_not_data_id, reset_loop_gate_id)
 
-            self._link(dff.clk_id, dff.output_id)
-            self._link(dff.output_id, loop_gate_id)
-            self._link(loop_gate_id, dff.clk_id)
+            self._link(reset_loop_gate_id, dff.output_id)
+            self._link(dff.output_id, set_loop_gate_id)
+            self._link(set_loop_gate_id, reset_loop_gate_id)
 
     def _compute_output_ready_time(self):
         def get_output_ready_time(logic_id: int) -> int:
