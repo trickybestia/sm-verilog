@@ -1,6 +1,6 @@
 from enum import IntEnum
 
-from .logic import Logic
+from .logic import Logic, LogicId
 
 
 class GateMode(IntEnum):
@@ -19,8 +19,8 @@ class GateMode(IntEnum):
 class Gate(Logic):
     mode: GateMode
 
-    def __init__(self, mode: GateMode = GateMode.AND) -> None:
-        super().__init__()
+    def __init__(self, id: LogicId, mode: GateMode = GateMode.AND) -> None:
+        super().__init__(id)
 
         self.mode = mode
 

@@ -3,6 +3,7 @@ from typing import Any, Union
 from uuid import UUID, uuid4
 import json
 
+from .logic import LogicId
 from .timer import Timer
 from .gate import Gate
 from .shapes import ShapeId
@@ -53,8 +54,8 @@ class Blueprint:
         x: int,
         y: int,
         z: int,
-        id: int,
-        gate_id: int,
+        id: LogicId,
+        gate_id: LogicId,
         color: Union[str, None] = None,
         xaxis: Union[int, None] = None,
         zaxis: Union[int, None] = None,
@@ -91,8 +92,8 @@ class Blueprint:
         x: int,
         y: int,
         z: int,
-        id: int,
-        gate_id: int,
+        id: LogicId,
+        gate_id: LogicId,
         color: Union[str, None] = None,
         xaxis: Union[int, None] = None,
         zaxis: Union[int, None] = None,
@@ -122,7 +123,6 @@ class Blueprint:
 
     def create_timer(
         self,
-        id: int,
         timer: Timer,
         x: int,
         y: int,
@@ -143,7 +143,7 @@ class Blueprint:
             "pos": {"x": x, "y": y, "z": z},
             "controller": {
                 "active": False,
-                "id": id,
+                "id": timer.id,
                 "controllers": [{"id": output} for output in timer.outputs],
                 "joints": None,
                 "seconds": timer.ticks // 40,
@@ -161,7 +161,6 @@ class Blueprint:
 
     def create_gate(
         self,
-        id: int,
         gate: Gate,
         x: int,
         y: int,
@@ -179,7 +178,7 @@ class Blueprint:
             "pos": {"x": x, "y": y, "z": z},
             "controller": {
                 "active": False,
-                "id": id,
+                "id": gate.id,
                 "controllers": [{"id": output} for output in gate.outputs],
                 "joints": None,
                 "mode": int(gate.mode),

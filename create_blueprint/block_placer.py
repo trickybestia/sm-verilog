@@ -1,12 +1,12 @@
 from typing import Union
 
-from .logic import Logic
+from .logic import Logic, LogicId
 from .timer import Timer
 from .gate import Gate
 from .shapes import ShapeId
 from .color_generator import ColorGenerator
 from .blueprint import Blueprint
-from .circuit import Circuit, Port
+from .circuit import Circuit
 
 
 class BlockPlacer:
@@ -39,7 +39,6 @@ class BlockPlacer:
         middle_gates_offset = 0
 
         def create_gate(
-            gate_id: int,
             gate: Gate,
             x: int,
             y: int,
@@ -56,15 +55,13 @@ class BlockPlacer:
                 xaxis = -1
                 zaxis = 0
 
-            blueprint.create_gate(
-                gate_id, gate, x, y, z, color=color, xaxis=xaxis, zaxis=zaxis
-            )
+            blueprint.create_gate(gate, x, y, z, color=color, xaxis=xaxis, zaxis=zaxis)
 
             if attachment is not None:
-                create_attachment(gate_id, x, y, z, attachment, color)
+                create_attachment(gate.id, x, y, z, attachment, color)
 
         def create_attachment(
-            gate_id: int,
+            gate_id: LogicId,
             gate_x: int,
             gate_y: int,
             gate_z: int,
@@ -97,7 +94,7 @@ class BlockPlacer:
                 case _:
                     raise ValueError(f"attachment with name {attachment} doesn't exist")
 
-        def place_middle_logic(logic_id: int, logic: Logic, rotate_to_inputs: bool):
+        def place_middle_logic(logic: Logic, rotate_to_inputs: bool):
             nonlocal middle_gates_offset
 
             layer_offset = 0
@@ -120,29 +117,18 @@ class BlockPlacer:
                     blueprint.create_solid(ShapeId.Concrete, x, y, 0)
 
             if isinstance(logic, Gate):
-                create_gate(logic_id, logic, x, y, z, rotate_to_inputs)
+                create_gate(logic, x, y, z, rotate_to_inputs)
             elif isinstance(logic, Timer):
-                blueprint.create_timer(logic_id, logic, x, y, z)
+                blueprint.create_timer(logic, x, y, z)
 
             if not self.compact:
                 middle_gates_offset += 1
-
-        def place_port_in_middle(port: Port):
-            for port_gate in port.gates:
-                place_middle_logic(
-                    port_gate.gate_id, port_gate.gate, self.rotate_middle_gates_to_input
-                )
 
         blueprint.description += "Inputs (first is left):\n\n"
 
         input_gates_offset = 0
 
         for name, input in circuit.inputs.items():
-            if input.hide:
-                place_port_in_middle(input)
-
-                continue
-
             color = color_generator.next()
             blueprint.description += f"{name}: {color.name}\n"
 
@@ -166,8 +152,7 @@ class BlockPlacer:
 
             for i, input_gate in enumerate(input.gates):
                 create_gate(
-                    input_gate.gate_id,
-                    input_gate.gate,
+                    input_gate,
                     start_x + i % input.stripe_width,
                     start_y,
                     start_z + i // input.stripe_width,
@@ -183,11 +168,6 @@ class BlockPlacer:
         output_gates_offset = 0
 
         for name, output in circuit.outputs.items():
-            if output.hide:
-                place_port_in_middle(output)
-
-                continue
-
             color = color_generator.next()
             blueprint.description += f"{name}: {color.name}\n"
 
@@ -206,8 +186,7 @@ class BlockPlacer:
 
             for i, output_gate in enumerate(output.gates):
                 create_gate(
-                    output_gate.gate_id,
-                    output_gate.gate,
+                    output_gate,
                     start_x + i % output.stripe_width,
                     start_y,
                     start_z + i // output.stripe_width,
@@ -215,7 +194,7 @@ class BlockPlacer:
                     color=color.hex,
                 )
 
-        for logic_id, logic in circuit.middle_logic.items():
-            place_middle_logic(logic_id, logic, self.rotate_middle_gates_to_input)
+        for logic in circuit.middle_logic.values():
+            place_middle_logic(logic, self.rotate_middle_gates_to_input)
 
         return blueprint

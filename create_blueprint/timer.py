@@ -1,4 +1,4 @@
-from .logic import Logic
+from .logic import Logic, LogicId
 
 
 class Timer(Logic):
@@ -8,8 +8,8 @@ class Timer(Logic):
 
     ticks: int
 
-    def __init__(self, ticks: int = 0) -> None:
-        super().__init__()
+    def __init__(self, id: LogicId, ticks: int = 0) -> None:
+        super().__init__(id)
 
         self.ticks = ticks
 
