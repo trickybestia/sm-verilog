@@ -7,7 +7,7 @@ from .logic import Logic
 from .cell import Cell
 from .gate import Gate, GateMode
 from .utils import get_or_insert
-from .gate_id_generator import GateIdGenerator
+from .id_generator import IdGenerator
 from .net import Net
 
 
@@ -58,7 +58,7 @@ class Circuit:
     middle_logic: dict[int, Logic]  # Logic ID -> Logic
     inputs: dict[str, Input]
     outputs: dict[str, Output]
-    id_generator: GateIdGenerator
+    id_generator: IdGenerator
     output_ready_time: int
 
     @classmethod
@@ -84,7 +84,7 @@ class Circuit:
         self.middle_logic = {}
         self.inputs = {}
         self.outputs = {}
-        self.id_generator = GateIdGenerator()
+        self.id_generator = IdGenerator()
         self.output_ready_time = 0
 
     @classmethod

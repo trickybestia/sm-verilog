@@ -1,7 +1,7 @@
 from typing import Union
 
 
-class GateIdGenerator:
+class IdGenerator:
     _id: int
 
     def __init__(self) -> None:
