@@ -129,7 +129,12 @@ def main():
 
     print()
     print()
-    print(f"Circuit delay is {circuit.output_ready_time} ticks.")
+
+    if len(circuit.dffs) == 0:
+        print(f"Circuit delay is {circuit.output_ready_time} ticks.")
+    else:
+        print("Circuit contains D flip-flops. Can't determine it's delay.")
+
     print()
     print(
         f'Your blueprint is "{args.blueprints_path / args.top / str(blueprint.uuid)}"'

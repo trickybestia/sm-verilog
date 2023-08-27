@@ -59,15 +59,16 @@ def _create_cells_verilog(cells: dict[str, Cell]) -> str:
 
 
 def _create_yosys_script(
-    top_module: str, files: list[Path], show: bool, blueprints_path: Path
+    top_module: str, files: list[str], show: bool, blueprints_path: Path
 ) -> str:
     return f"""
 read_verilog -sv {" ".join(f'"{file}"' for file in files)}
 synth -flatten -top {top_module}
 dfflibmap -liberty scrap_mechanic_cells.lib
 abc -liberty scrap_mechanic_cells.lib
+#splitnets -ports
 opt
-{f"show -lib scrap_mechanic_cells.sv {top_module}" if show else ""}
+{f"show -lib scrap_mechanic_cells.sv -stretch {top_module}" if show else ""}
 write_json {blueprints_path / top_module / f"{top_module}.json"}
 """
 

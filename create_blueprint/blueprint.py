@@ -144,7 +144,7 @@ class Blueprint:
             "controller": {
                 "active": False,
                 "id": timer.id,
-                "controllers": [{"id": output} for output in timer.outputs],
+                "controllers": [{"id": output.id} for output in timer.outputs],
                 "joints": None,
                 "seconds": timer.ticks // 40,
                 "ticks": timer.ticks % 40,
@@ -179,7 +179,7 @@ class Blueprint:
             "controller": {
                 "active": False,
                 "id": gate.id,
-                "controllers": [{"id": output} for output in gate.outputs],
+                "controllers": [{"id": output.id} for output in gate.outputs],
                 "joints": None,
                 "mode": int(gate.mode),
             },

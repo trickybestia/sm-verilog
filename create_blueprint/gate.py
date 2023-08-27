@@ -1,4 +1,5 @@
 from enum import IntEnum
+from typing import Union
 
 from .logic import Logic, LogicId
 
@@ -24,5 +25,5 @@ class Gate(Logic):
 
         self.mode = mode
 
-    def compute_output_ready_time(self, max_arrival_time: int):
-        self.output_ready_time = max_arrival_time + 1
+    def _compute_output_ready_time(self) -> Union[int, None]:
+        return self._max_arrival_time(-1) + 1

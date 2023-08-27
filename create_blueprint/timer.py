@@ -1,3 +1,5 @@
+from typing import Union
+
 from .logic import Logic, LogicId
 
 
@@ -13,5 +15,5 @@ class Timer(Logic):
 
         self.ticks = ticks
 
-    def compute_output_ready_time(self, max_arrival_time: int):
-        self.output_ready_time = max_arrival_time + self.ticks
+    def _compute_output_ready_time(self) -> Union[int, None]:
+        return self._max_arrival_time(-self.ticks - 1) + self.ticks + 1
