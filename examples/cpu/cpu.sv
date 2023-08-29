@@ -9,26 +9,23 @@
 `define MATH_OP_ADD 1'b0
 `define MATH_OP_SUB 1'b1
 
-module CPU
+module cpu
 (
-    input bit clk, rst,
-
-    output reg halt,
-
-    output reg [7:0] pc,
+    input bit            clk, rst,
+    input bit [15:0]     mem_value,
 
     (* rotate_to_inputs, stripe_width=8, override_x=1, override_y=1, override_z=3 *)
     input  bit [2*8-1:0] inputs,
+
+    output reg           halt,
+    output reg [7:0]     pc,
+    output reg [7:0]     mem_address,
 
     (* rotate_to_inputs, stripe_width=8, override_x=1, override_y=1, override_z=6 *)
     output reg [2*8-1:0] outputs,
 
     (* rotate_to_inputs, stripe_width=8, override_x=10, override_y=1, override_z=3 *)
-    output reg [4*8-1:0] regs,
-
-    input  bit [15:0]    mem_value,
-
-    output reg [7:0]     mem_address
+    output reg [4*8-1:0] regs
 );
     bit [15:0] instruction = mem_value;
     
