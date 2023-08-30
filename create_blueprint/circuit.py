@@ -151,6 +151,8 @@ class Circuit:
                                 gate = c._create_gate(None, GateMode.NAND)
 
                                 _link(always_zero_gate, gate)
+
+                                output.gates.append(gate)
                             case _:
                                 gate = GroupGate(c.id_generator.next(), all_outputs)
 
