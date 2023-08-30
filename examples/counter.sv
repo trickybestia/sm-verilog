@@ -1,10 +1,10 @@
-module Counter #(parameter COUNTER_WIDTH = 8) (
+module counter #(parameter COUNTER_WIDTH = 8) (
     input bit clk, rst,
     
-    output reg [COUNTER_WIDTH-1:0] counter
+    output reg [COUNTER_WIDTH-1:0] value
 );
     always @(posedge clk) begin
-        if (rst) counter = '0;
-        else counter++;
+        if (rst) value = '0;
+        else value++;
     end
 endmodule
