@@ -1,7 +1,7 @@
 import argparse
 from pathlib import Path
 
-from .block_placer import BlockPlacer
+from .block_placer import BlockPlacer, BlockPlacerOptions
 from .cell import generate_cells
 from .blueprint import Blueprint
 from .circuit import Circuit
@@ -111,17 +111,16 @@ def main():
 
     circuit = Circuit.from_yosys_output(CELLS, yosys_output, args.top)
 
-    block_placer = BlockPlacer()
+    block_placer_options = BlockPlacerOptions(
+        args.height,
+        args.compact,
+        args.rotate_middle_gates_to_input,
+        args.auto_height,
+        args.default_attachment,
+        args.cubic,
+    )
 
-    if args.height is not None:
-        block_placer.height = args.height
-    block_placer.auto_height = args.auto_height
-    block_placer.compact = args.compact
-    block_placer.rotate_middle_gates_to_input = args.rotate_middle_gates_to_input
-    block_placer.default_attachment = args.default_attachment
-    block_placer.cubic = args.cubic
-
-    blueprint: Blueprint = block_placer.place(circuit)
+    blueprint: Blueprint = BlockPlacer.place(circuit, block_placer_options)
 
     blueprint.name = args.top
 

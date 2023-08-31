@@ -18,6 +18,7 @@ class Port:
     gates: list[Gate]
     rotate_to_inputs: bool
     stripe_width: int
+    stripes_orientation: Union[Literal["vertical"], Literal["horizontal"]]
     override_x: Union[int, None]
     override_y: Union[int, None]
     override_z: Union[int, None]
@@ -106,6 +107,15 @@ class Circuit:
             if "override_z" in netnames[port_name]["attributes"]:
                 override_z = int(netnames[port_name]["attributes"]["override_z"], 2)
 
+            stripes_orientation = netnames[port_name]["attributes"].get(
+                "stripes_orientation", "horizontal"
+            )
+
+            if stripes_orientation not in ("horizontal", "vertical"):
+                raise ValueError(
+                    f'invalid value "{stripes_orientation}" for attribute "stripes_orientation"'
+                )
+
             match port["direction"]:
                 case "input":
                     attachment: Union[str, None] = netnames[port_name][
@@ -116,6 +126,7 @@ class Circuit:
                         [],
                         rotate_to_inputs,
                         stripe_width,
+                        stripes_orientation,
                         override_x,
                         override_y,
                         override_z,
@@ -134,6 +145,7 @@ class Circuit:
                         [],
                         rotate_to_inputs,
                         stripe_width,
+                        stripes_orientation,
                         override_x,
                         override_y,
                         override_z,
