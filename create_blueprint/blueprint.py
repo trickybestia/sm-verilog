@@ -8,6 +8,8 @@ from .timer import Timer
 from .gate import Gate
 from .shapes import ShapeId
 
+_DEFAULT_COLOR = "222222"
+
 
 class Blueprint:
     uuid: UUID
@@ -35,6 +37,8 @@ class Blueprint:
             xaxis = -1
         if zaxis is None:
             zaxis = 2
+        if color is None:
+            color = _DEFAULT_COLOR
 
         block = {
             "bounds": {"x": 1, "y": 1, "z": 1},
@@ -42,10 +46,8 @@ class Blueprint:
             "shapeId": shape_id,
             "xaxis": xaxis,
             "zaxis": zaxis,
+            "color": color,
         }
-
-        if color is not None:
-            block["color"] = color
 
         self.blocks.append(block)
 
@@ -56,7 +58,7 @@ class Blueprint:
         z: int,
         id: LogicId,
         gate_id: LogicId,
-        color: Union[str, None] = None,
+        color: Union[str, None] = _DEFAULT_COLOR,
         xaxis: Union[int, None] = None,
         zaxis: Union[int, None] = None,
     ):
@@ -64,6 +66,8 @@ class Blueprint:
             xaxis = -3
         if zaxis is None:
             zaxis = -2
+        if color is None:
+            color = _DEFAULT_COLOR
 
         block = {
             "controller": {
@@ -80,10 +84,8 @@ class Blueprint:
             "shapeId": ShapeId.Sensor,
             "xaxis": xaxis,
             "zaxis": zaxis,
+            "color": color,
         }
-
-        if color is not None:
-            block["color"] = color
 
         self.blocks.append(block)
 
@@ -102,6 +104,8 @@ class Blueprint:
             xaxis = -1
         if zaxis is None:
             zaxis = 0
+        if color is None:
+            color = _DEFAULT_COLOR
 
         block = {
             "controller": {
@@ -114,10 +118,8 @@ class Blueprint:
             "shapeId": ShapeId.Switch,
             "xaxis": xaxis,
             "zaxis": zaxis,
+            "color": color,
         }
-
-        if color is not None:
-            block["color"] = color
 
         self.blocks.append(block)
 
@@ -138,6 +140,8 @@ class Blueprint:
             xaxis = -1
         if zaxis is None:
             zaxis = 2
+        if color is None:
+            color = _DEFAULT_COLOR
 
         block = {
             "pos": {"x": x, "y": y, "z": z},
@@ -152,10 +156,8 @@ class Blueprint:
             "shapeId": ShapeId.Timer,
             "xaxis": xaxis,
             "zaxis": zaxis,
+            "color": color,
         }
-
-        if color is not None:
-            block["color"] = color
 
         self.blocks.append(block)
 
@@ -173,6 +175,8 @@ class Blueprint:
             xaxis = -1
         if zaxis is None:
             zaxis = 2
+        if color is None:
+            color = _DEFAULT_COLOR
 
         block = {
             "pos": {"x": x, "y": y, "z": z},
@@ -186,10 +190,8 @@ class Blueprint:
             "shapeId": ShapeId.Gate,
             "xaxis": xaxis,
             "zaxis": zaxis,
+            "color": color,
         }
-
-        if color is not None:
-            block["color"] = color
 
         self.blocks.append(block)
 
