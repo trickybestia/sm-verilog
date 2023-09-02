@@ -35,6 +35,7 @@ class Output(Port):
 
 
 class Circuit:
+    dff_inputs: list[GroupGate]
     dffs: list[DffOutput]
     all_logic: dict[LogicId, Logic]
     middle_logic: dict[LogicId, Logic]
@@ -61,6 +62,7 @@ class Circuit:
         return c
 
     def __init__(self) -> None:
+        self.dff_inputs = []
         self.dffs = []
         self.all_logic = {}
         self.middle_logic = {}
@@ -185,18 +187,16 @@ class Circuit:
 
                     dff.not_data = c._create_gate("middle", GateMode.NAND)
 
-                    dff_inputs: list[GroupGate] = []
-
                     dff.clk_and_data = GroupGate(
-                        c.id_generator.next(), dff_inputs, GateMode.AND
+                        c.id_generator.next(), c.dff_inputs, GateMode.AND
                     )
                     c._register_logic(dff.clk_and_data, "middle")
                     dff.clk_and_not_data = GroupGate(
-                        c.id_generator.next(), dff_inputs, GateMode.AND
+                        c.id_generator.next(), c.dff_inputs, GateMode.AND
                     )
                     c._register_logic(dff.clk_and_not_data, "middle")
 
-                    dff_inputs.extend((dff.clk_and_data, dff.clk_and_not_data))
+                    c.dff_inputs.extend((dff.clk_and_data, dff.clk_and_not_data))
 
                     _link(dff.not_data, dff.clk_and_not_data)
 
