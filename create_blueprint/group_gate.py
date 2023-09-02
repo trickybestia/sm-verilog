@@ -13,6 +13,7 @@ class GroupGate(Gate):
     ) -> None:
         super().__init__(id, mode)
 
+        self.requires_inputs_buffering = True
         self._output_ready_time = None
         self._group_gates = group_gates
 

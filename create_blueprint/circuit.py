@@ -266,6 +266,9 @@ class Circuit:
             last_buffer_total_delay = 0
 
             for required_delay, output_gate in outputs:
+                if not output_gate.requires_inputs_buffering:
+                    continue
+
                 _unlink(gate, output_gate)
 
                 new_buffer_delay = required_delay - last_buffer_total_delay
