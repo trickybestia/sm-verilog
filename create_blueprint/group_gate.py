@@ -5,7 +5,7 @@ from .gate import Gate, GateMode
 
 
 class GroupGate(Gate):
-    _output_ready_time: int
+    _output_ready_time: Union[int, None]
     _group_gates: list["GroupGate"]
 
     def __init__(
@@ -13,10 +13,16 @@ class GroupGate(Gate):
     ) -> None:
         super().__init__(id, mode)
 
-        self._output_ready_time = 0
+        self._output_ready_time = None
         self._group_gates = group_gates
 
-    def _compute_output_ready_time(self) -> Union[int, None]:
-        self._output_ready_time = self._max_arrival_time(-1) + 1
+    def _compute_output_ready_time_internal(self) -> int:
+        if self._output_ready_time is None:
+            self._output_ready_time = self._max_arrival_time(-1) + 1
 
-        return max(output._output_ready_time for output in self._group_gates)
+        return self._output_ready_time
+
+    def _compute_output_ready_time(self) -> Union[int, None]:
+        return max(
+            output._compute_output_ready_time_internal() for output in self._group_gates
+        )
