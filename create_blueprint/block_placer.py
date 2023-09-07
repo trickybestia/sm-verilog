@@ -1,13 +1,14 @@
 from dataclasses import dataclass
 from typing import Union
 
+from .port import Port
 from .logic import Logic, LogicId
 from .timer import Timer
 from .gate import Gate
 from .shapes import ShapeId
 from .color_generator import Color, ColorGenerator
 from .blueprint import Blueprint
-from .circuit import Circuit, Port
+from .circuit import Circuit
 
 
 @dataclass

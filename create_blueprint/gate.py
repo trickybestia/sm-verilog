@@ -25,5 +25,8 @@ class Gate(Logic):
 
         self.mode = mode
 
+    def _render_name(self) -> str:
+        return self.mode.name
+
     def _compute_output_ready_time(self) -> Union[int, None]:
         return self._max_arrival_time(-1) + 1

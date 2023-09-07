@@ -1,6 +1,7 @@
 import argparse
 from pathlib import Path
 
+from .graphviz import render_circuit
 from .block_placer import BlockPlacer, BlockPlacerOptions
 from .cell import generate_cells
 from .blueprint import Blueprint
@@ -42,7 +43,13 @@ def main():
     parser.add_argument(
         "-s",
         "--show",
-        help="show generated flowchart",
+        help="show generated modules flowchart",
+        action="store_true",
+    )
+    parser.add_argument(
+        "-g",
+        "--graphviz-generate-gates",
+        help="generate gates flowchart",
         action="store_true",
     )
     parser.add_argument(
@@ -126,15 +133,21 @@ def main():
 
     blueprint.save(args.blueprints_path / args.top)
 
-    print()
-    print()
+    print("\n")
+
+    if args.graphviz_generate_gates:
+        path = args.blueprints_path / args.top / f"{args.top}.dot"
+        dot = render_circuit(circuit)
+
+        path.write_text(dot)
+
+        print(f'Gates flowchart is "{path}"\n')
 
     if len(circuit.dffs) == 0:
-        print(f"Circuit delay is {circuit.output_ready_time} ticks.")
+        print(f"Circuit delay is {circuit.output_ready_time} ticks.\n")
     else:
-        print("Circuit contains D flip-flops. Can't determine it's delay.")
+        print("Circuit contains D flip-flops. Can't determine it's delay.\n")
 
-    print()
     print(
         f'Your blueprint is "{args.blueprints_path / args.top / str(blueprint.uuid)}"'
     )

@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Union
+from graphviz import Digraph
 
 LogicId = int
 
@@ -23,6 +24,27 @@ class Logic(ABC):
             self._computed_output_ready_time = self._compute_output_ready_time()
 
         return self._computed_output_ready_time
+
+    def render(self, graph: Digraph):
+        graph.node(self.render_id(), self._render_label())
+
+        self._render_link_outputs(graph)
+
+    def _render_link_outputs(self, graph: Digraph):
+        for output in self.outputs:
+            graph.edge(self.render_id(), output.render_id())
+
+    def _render_label(self) -> str:
+        return f"{self._render_name()}\n{self._render_description()}"
+
+    def _render_name(self) -> str:
+        return self.render_id()
+
+    def _render_description(self) -> str:
+        return f"arrival: {self._max_arrival_time(0)} ticks\nready: {self.output_ready_time()} ticks"
+
+    def render_id(self) -> str:
+        return f"logic_{self.id}"
 
     @abstractmethod
     def _compute_output_ready_time(self) -> Union[int, None]:

@@ -1,5 +1,8 @@
 from typing import Callable, TypeVar
 
+from .gate import Gate
+from .port import Port
+
 
 K = TypeVar("K")
 V = TypeVar("V")
@@ -12,8 +15,8 @@ def get_or_insert(d: dict[K, V], key: K, default: Callable[[], V]) -> V:
     return d[key]
 
 
-T = TypeVar("T")
+def port_gate_render_name(gate: Gate, port: Port) -> str:
+    if len(port.gates) == 1:
+        return port.name
 
-
-def replace_first(l: list[T], old_value: T, new_value: T):
-    l[l.index(old_value)] = new_value
+    return f"{port.name}[{port.gates.index(gate)}]"

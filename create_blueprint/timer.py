@@ -15,5 +15,8 @@ class Timer(Logic):
 
         self.ticks = ticks
 
+    def _render_name(self) -> str:
+        return f"Timer: {self.ticks} ticks"
+
     def _compute_output_ready_time(self) -> Union[int, None]:
         return self._max_arrival_time(-self.ticks - 1) + self.ticks + 1

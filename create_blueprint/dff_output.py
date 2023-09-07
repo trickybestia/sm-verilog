@@ -16,5 +16,8 @@ class DffOutput(Gate):
         self.clk_and_data = None
         self.clk_and_not_data = None
 
+    def _render_name(self) -> str:
+        return f"DFF output ({super()._render_name()})"
+
     def _compute_output_ready_time(self) -> Union[int, None]:
         return None

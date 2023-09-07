@@ -1,7 +1,8 @@
-from dataclasses import dataclass
 from typing import Literal, Self, Tuple, Union
 import json
 
+from .output_gate import Output, OutputGate
+from .input_gate import Input, InputGate
 from .group_gate import GroupGate
 from .dff_output import DffOutput
 from .timer import Timer
@@ -11,27 +12,6 @@ from .gate import Gate, GateMode
 from .utils import get_or_insert
 from .id_generator import IdGenerator
 from .net import Net
-
-
-@dataclass
-class Port:
-    gates: list[Gate]
-    rotate_to_inputs: bool
-    stripe_width: int
-    stripes_orientation: Union[Literal["vertical"], Literal["horizontal"]]
-    override_x: Union[int, None]
-    override_y: Union[int, None]
-    override_z: Union[int, None]
-
-
-@dataclass
-class Input(Port):
-    attachment: Union[str, None]
-
-
-@dataclass
-class Output(Port):
-    ...
 
 
 class Circuit:
@@ -84,7 +64,7 @@ class Circuit:
 
         c = Circuit()
         nets: dict[int, Net] = {}
-        all_outputs: list[GroupGate] = []
+        volatile_outputs: list[GroupGate] = []
         always_zero_gate: Union[Gate, None] = None
 
         def get_net(net_id: int) -> Net:
@@ -125,6 +105,7 @@ class Circuit:
                     ].get("attachment")
 
                     input = Input(
+                        port_name,
                         [],
                         rotate_to_inputs,
                         stripe_width,
@@ -137,13 +118,15 @@ class Circuit:
                     c.inputs[port_name] = input
 
                     for bit in port_bits:
-                        gate = c._create_gate(None, GateMode.OR)
+                        gate = InputGate(c.id_generator.next(), input)
+                        c._register_logic(gate, None)
 
                         input.gates.append(gate)
 
                         get_net(bit).input_id = gate.id
                 case "output":
                     output = Output(
+                        port_name,
                         [],
                         rotate_to_inputs,
                         stripe_width,
@@ -157,21 +140,27 @@ class Circuit:
                     for bit in port_bits:
                         match bit:
                             case "0":
-                                output.gates.append(c._create_gate(None))
+                                gate = OutputGate(c.id_generator.next(), [], output)
+                                c._register_logic(gate, None)
                             case "1":
                                 if always_zero_gate is None:
                                     always_zero_gate = c._create_gate("middle")
 
-                                gate = c._create_gate(None, GateMode.NAND)
+                                gate = OutputGate(
+                                    c.id_generator.next(), [], output, GateMode.NAND
+                                )
+                                c._register_logic(gate, None)
 
                                 _link(always_zero_gate, gate)
 
                                 output.gates.append(gate)
                             case _:
-                                gate = GroupGate(c.id_generator.next(), all_outputs)
-
+                                gate = OutputGate(
+                                    c.id_generator.next(), volatile_outputs, output
+                                )
                                 c._register_logic(gate, None)
-                                all_outputs.append(gate)
+
+                                volatile_outputs.append(gate)
                                 output.gates.append(gate)
 
                                 get_net(bit).outputs_ids.append(gate.id)
