@@ -1,7 +1,7 @@
-`define OP_ADD 0'b00
-`define OP_SUB 0'b01
-`define OP_MUL 0'b10
-`define OP_DIV 0'b11
+`define OP_ADD 2'b00
+`define OP_SUB 2'b01
+`define OP_MUL 2'b10
+`define OP_DIV 2'b11
 
 module calculator #(parameter DATA_WIDTH = 16) (
     input bit [DATA_WIDTH-1:0] a,
