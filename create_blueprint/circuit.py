@@ -152,8 +152,6 @@ class Circuit:
                                 c._register_logic(gate, None)
 
                                 _link(always_zero_gate, gate)
-
-                                output.gates.append(gate)
                             case _:
                                 gate = OutputGate(
                                     c.id_generator.next(), volatile_outputs, output
@@ -161,9 +159,10 @@ class Circuit:
                                 c._register_logic(gate, None)
 
                                 volatile_outputs.append(gate)
-                                output.gates.append(gate)
 
                                 get_net(bit).outputs_ids.append(gate.id)
+
+                        output.gates.append(gate)
 
         for cell in module["cells"].values():
             connections = cell["connections"]
@@ -242,9 +241,6 @@ class Circuit:
         buffers: list[Logic] = []
 
         for gate in self.all_logic.values():
-            if gate.output_ready_time() is None:
-                continue
-
             outputs: list[Tuple[int, Logic]] = [
                 (
                     cast(int, output_gate.output_ready_time())
@@ -262,7 +258,10 @@ class Circuit:
             last_buffer_total_delay = 0
 
             for required_delay, output_gate in outputs:
-                if not output_gate.requires_inputs_buffering:
+                if (
+                    not output_gate.requires_inputs_buffering
+                    or output_gate.depends_on_dff != gate.depends_on_dff
+                ):
                     continue
 
                 _unlink(gate, output_gate)

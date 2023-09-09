@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from functools import cached_property
 from typing import Union
 from graphviz import Digraph
 
@@ -9,17 +10,26 @@ class Logic(ABC):
     id: LogicId
     inputs: list["Logic"]
     outputs: list["Logic"]
-    requires_inputs_buffering: bool
     _computed_output_ready_time: Union[int, None]
+
+    @property
+    def requires_inputs_buffering(self) -> bool:
+        return False
+
+    @cached_property
+    def depends_on_dff(self) -> bool:
+        if len(self.inputs) == 0:
+            return False
+
+        return all(input.depends_on_dff for input in self.inputs)
 
     def __init__(self, id: LogicId) -> None:
         self.id = id
         self.inputs = []
         self.outputs = []
-        self.requires_inputs_buffering = False
         self._computed_output_ready_time = None
 
-    def output_ready_time(self) -> Union[int, None]:
+    def output_ready_time(self) -> int:
         if self._computed_output_ready_time is None:
             self._computed_output_ready_time = self._compute_output_ready_time()
 
@@ -47,7 +57,7 @@ class Logic(ABC):
         return f"logic_{self.id}"
 
     @abstractmethod
-    def _compute_output_ready_time(self) -> Union[int, None]:
+    def _compute_output_ready_time(self) -> int:
         ...
 
     def _max_arrival_time(self, default: int) -> int:
@@ -55,7 +65,8 @@ class Logic(ABC):
             (
                 output_ready_time
                 for input in self.inputs
-                if (output_ready_time := input.output_ready_time()) is not None
+                if input.depends_on_dff == self.depends_on_dff
+                and (output_ready_time := input.output_ready_time()) is not None
             ),
             default=default,
         )
