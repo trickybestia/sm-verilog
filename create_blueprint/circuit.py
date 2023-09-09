@@ -1,4 +1,4 @@
-from typing import Literal, Self, Tuple, Union
+from typing import Literal, Self, Tuple, Union, cast
 import json
 
 from .output_gate import Output, OutputGate
@@ -170,31 +170,34 @@ class Circuit:
 
             match cell["type"]:
                 case "DFF":
-                    dff = DffOutput(c.id_generator.next())
+                    not_data = c._create_gate("middle", GateMode.NAND)
+
+                    clk_and_data = GroupGate(
+                        c.id_generator.next(), c.dff_inputs, GateMode.AND
+                    )
+                    c._register_logic(clk_and_data, "middle")
+                    clk_and_not_data = GroupGate(
+                        c.id_generator.next(), c.dff_inputs, GateMode.AND
+                    )
+                    c._register_logic(clk_and_not_data, "middle")
+
+                    c.dff_inputs.extend((clk_and_data, clk_and_not_data))
+
+                    _link(not_data, clk_and_not_data)
+
+                    get_net(connections["C"][0]).outputs_ids.extend(
+                        (clk_and_data.id, clk_and_not_data.id)
+                    )
+                    get_net(connections["D"][0]).outputs_ids.extend(
+                        (clk_and_data.id, not_data.id)
+                    )
+
+                    dff = DffOutput(
+                        c.id_generator.next(), clk_and_data, clk_and_not_data
+                    )
                     c.dffs.append(dff)
                     c._register_logic(dff, "middle")
 
-                    dff.not_data = c._create_gate("middle", GateMode.NAND)
-
-                    dff.clk_and_data = GroupGate(
-                        c.id_generator.next(), c.dff_inputs, GateMode.AND
-                    )
-                    c._register_logic(dff.clk_and_data, "middle")
-                    dff.clk_and_not_data = GroupGate(
-                        c.id_generator.next(), c.dff_inputs, GateMode.AND
-                    )
-                    c._register_logic(dff.clk_and_not_data, "middle")
-
-                    c.dff_inputs.extend((dff.clk_and_data, dff.clk_and_not_data))
-
-                    _link(dff.not_data, dff.clk_and_not_data)
-
-                    get_net(connections["C"][0]).outputs_ids.extend(
-                        (dff.clk_and_data.id, dff.clk_and_not_data.id)
-                    )
-                    get_net(connections["D"][0]).outputs_ids.extend(
-                        (dff.clk_and_data.id, dff.not_data.id)
-                    )
                     get_net(connections["Q"][0]).input_id = dff.id
                 case _:
                     gate = c._create_gate("middle")
@@ -209,7 +212,9 @@ class Circuit:
 
         for net in nets.values():
             for output_logic_id in net.outputs_ids:
-                _link(c.all_logic[net.input_id], c.all_logic[output_logic_id])
+                _link(
+                    c.all_logic[cast(int, net.input_id)], c.all_logic[output_logic_id]
+                )
 
         return c
 
@@ -230,7 +235,7 @@ class Circuit:
             for output_gate in output.gates:
                 self.output_ready_time = max(
                     self.output_ready_time,
-                    output_gate.output_ready_time(),
+                    cast(int, output_gate.output_ready_time()),
                 )
 
     def _insert_buffers(self):
@@ -242,7 +247,9 @@ class Circuit:
 
             outputs: list[Tuple[int, Logic]] = [
                 (
-                    output_gate.output_ready_time() - gate.output_ready_time() - 1,
+                    cast(int, output_gate.output_ready_time())
+                    - cast(int, gate.output_ready_time())
+                    - 1,
                     output_gate,
                 )
                 for output_gate in gate.outputs

@@ -22,8 +22,8 @@ class BlockPlacerOptions:
 
 
 class BlockPlacer:
-    _circuit: Union[Circuit, None]
-    _blueprint: Union[Blueprint, None]
+    _circuit: Circuit
+    _blueprint: Blueprint
     _options: BlockPlacerOptions
     _height: int
     _middle_gates_offset: int

@@ -5,16 +5,14 @@ from .gate import Gate, GateMode
 
 
 class DffOutput(Gate):
-    not_data: Union[Gate, None]
-    clk_and_data: Union[Gate, None]
-    clk_and_not_data: Union[Gate, None]
+    clk_and_data: Gate
+    clk_and_not_data: Gate
 
-    def __init__(self, id: LogicId) -> None:
+    def __init__(self, id: LogicId, clk_and_data: Gate, clk_and_not_data: Gate) -> None:
         super().__init__(id, GateMode.NAND)
 
-        self.not_data = None
-        self.clk_and_data = None
-        self.clk_and_not_data = None
+        self.clk_and_data = clk_and_data
+        self.clk_and_not_data = clk_and_not_data
 
     def _render_name(self) -> str:
         return f"DFF output ({super()._render_name()})"
