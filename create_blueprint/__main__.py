@@ -117,7 +117,7 @@ def main():
     module_flowchart_prefix = None
 
     if args.module_flowchart:
-        module_flowchart_prefix = args.blueprints_path / args.top / f"{args.top}-module"
+        module_flowchart_prefix = args.blueprints_path / args.top / f"module"
 
     yosys_output = compile(
         args.top, args.files, CELLS, module_flowchart_prefix, args.blueprints_path
@@ -146,7 +146,7 @@ def main():
         print(f'Module flowchart is "{module_flowchart_prefix}.dot"\n')
 
     if args.gates_flowchart:
-        path = args.blueprints_path / args.top / f"{args.top}-gates.dot"
+        path = args.blueprints_path / args.top / "gates.dot"
         dot = render_circuit(circuit)
 
         path.write_text(dot)
