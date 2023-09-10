@@ -242,7 +242,6 @@ class Circuit:
                     output_gate,
                 )
                 for output_gate in gate.outputs
-                if output_gate.output_ready_time() is not None
             ]
 
             outputs.sort(key=lambda t: t[0])

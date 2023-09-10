@@ -63,10 +63,9 @@ class Logic(ABC):
     def _max_arrival_time(self, default: int) -> int:
         return max(
             (
-                output_ready_time
+                input.output_ready_time()
                 for input in self.inputs
                 if input.depends_on_dff == self.depends_on_dff
-                and (output_ready_time := input.output_ready_time()) is not None
             ),
             default=default,
         )
