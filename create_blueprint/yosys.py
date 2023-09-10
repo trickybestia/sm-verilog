@@ -1,5 +1,6 @@
 from subprocess import run
 from pathlib import Path
+from typing import Union
 
 from .gate import GateMode
 from .cell import Cell
@@ -59,16 +60,18 @@ def _create_cells_verilog(cells: dict[str, Cell]) -> str:
 
 
 def _create_yosys_script(
-    top_module: str, files: list[str], show: bool, blueprints_path: Path
+    top_module: str,
+    files: list[str],
+    module_flowchart_prefix: Union[str, None],
+    blueprints_path: Path,
 ) -> str:
     return f"""
 read_verilog -sv {" ".join(f'"{file}"' for file in files)}
 synth -flatten -top {top_module}
 dfflibmap -liberty scrap_mechanic_cells.lib
 abc -liberty scrap_mechanic_cells.lib
-#splitnets -ports
 opt
-{f"show -lib scrap_mechanic_cells.sv -stretch {top_module}" if show else ""}
+{f"show -lib scrap_mechanic_cells.sv -format dot -viewer none -stretch -prefix {module_flowchart_prefix} {top_module}" if module_flowchart_prefix is not None else ""}
 write_json {blueprints_path / top_module / f"{top_module}.json"}
 """
 
@@ -77,16 +80,18 @@ def compile(
     top_module: str,
     files: list[str],
     cells: dict[str, Cell],
-    show: bool,
+    module_flowchart_prefix: Union[str, None],
     blueprints_path: Path,
 ) -> str:
     Path("scrap_mechanic_cells.lib").write_text(_create_cells_liberty(cells))
     Path("scrap_mechanic_cells.sv").write_text(_create_cells_verilog(cells))
 
     run(
-        "yosys",
+        ["yosys", "-s", "-"],
         check=True,
-        input=_create_yosys_script(top_module, files, show, blueprints_path).encode(),
+        input=_create_yosys_script(
+            top_module, files, module_flowchart_prefix, blueprints_path
+        ).encode(),
     )
 
     return (blueprints_path / top_module / f"{top_module}.json").read_text()

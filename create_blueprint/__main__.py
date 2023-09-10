@@ -41,14 +41,14 @@ def main():
         type=existing_path,
     )
     parser.add_argument(
-        "-s",
-        "--show",
-        help="show generated modules flowchart",
+        "-m",
+        "--module-flowchart",
+        help="generate module flowchart",
         action="store_true",
     )
     parser.add_argument(
         "-g",
-        "--graphviz-generate-gates",
+        "--gates-flowchart",
         help="generate gates flowchart",
         action="store_true",
     )
@@ -114,7 +114,14 @@ def main():
 
     (args.blueprints_path / args.top).mkdir(parents=True, exist_ok=True)
 
-    yosys_output = compile(args.top, args.files, CELLS, args.show, args.blueprints_path)
+    module_flowchart_prefix = None
+
+    if args.module_flowchart:
+        module_flowchart_prefix = args.blueprints_path / args.top / f"{args.top}-module"
+
+    yosys_output = compile(
+        args.top, args.files, CELLS, module_flowchart_prefix, args.blueprints_path
+    )
 
     circuit = Circuit.from_yosys_output(CELLS, yosys_output, args.top)
 
@@ -135,8 +142,11 @@ def main():
 
     print("\n")
 
-    if args.graphviz_generate_gates:
-        path = args.blueprints_path / args.top / f"{args.top}.dot"
+    if args.module_flowchart:
+        print(f'Module flowchart is "{module_flowchart_prefix}.dot"\n')
+
+    if args.gates_flowchart:
+        path = args.blueprints_path / args.top / f"{args.top}-gates.dot"
         dot = render_circuit(circuit)
 
         path.write_text(dot)

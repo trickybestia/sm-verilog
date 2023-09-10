@@ -16,7 +16,13 @@ def get_or_insert(d: dict[K, V], key: K, default: Callable[[], V]) -> V:
 
 
 def port_gate_render_name(gate: Gate, port: Port) -> str:
-    if len(port.gates) == 1:
-        return port.name
+    result = ""
 
-    return f"{port.name}[{port.gates.index(gate)}]"
+    if len(port.gates) == 1:
+        result += port.name
+
+    result += f"{port.name}[{port.gates.index(gate)}]"
+
+    result += f"\n{gate.mode.name}"
+
+    return result
