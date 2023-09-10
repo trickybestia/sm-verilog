@@ -1,5 +1,3 @@
-from typing import Union
-
 from .logic import LogicId
 from .gate import Gate, GateMode
 
