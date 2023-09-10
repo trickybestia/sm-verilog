@@ -20,8 +20,8 @@ def port_gate_render_name(gate: Gate, port: Port) -> str:
 
     if len(port.gates) == 1:
         result += port.name
-
-    result += f"{port.name}[{port.gates.index(gate)}]"
+    else:
+        result += f"{port.name}[{port.gates.index(gate)}]"
 
     result += f"\n{gate.mode.name}"
 
