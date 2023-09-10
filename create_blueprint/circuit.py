@@ -1,3 +1,4 @@
+from functools import cached_property
 from typing import Literal, Self, Tuple, Union, cast
 import json
 
@@ -22,7 +23,10 @@ class Circuit:
     inputs: dict[str, Input]
     outputs: dict[str, Output]
     id_generator: IdGenerator
-    output_ready_time: int
+
+    @cached_property
+    def output_ready_time(self) -> int:
+        return max(logic.output_ready_time() for logic in self.all_logic.values())
 
     @classmethod
     def from_yosys_output(
@@ -32,8 +36,6 @@ class Circuit:
         top_module: str,
     ) -> Self:
         c = cls._from_yosys_output(cells, yosys_output, top_module)
-
-        c._compute_output_ready_time()
 
         if len(c.dffs) != 0:
             c._connect_dffs()
@@ -49,7 +51,6 @@ class Circuit:
         self.inputs = {}
         self.outputs = {}
         self.id_generator = IdGenerator()
-        self.output_ready_time = 0
 
     @classmethod
     def _from_yosys_output(
@@ -228,14 +229,6 @@ class Circuit:
             _link(reset_loop_gate, dff)
             _link(dff, set_loop_gate)
             _link(set_loop_gate, reset_loop_gate)
-
-    def _compute_output_ready_time(self):
-        for output in self.outputs.values():
-            for output_gate in output.gates:
-                self.output_ready_time = max(
-                    self.output_ready_time,
-                    cast(int, output_gate.output_ready_time()),
-                )
 
     def _insert_buffers(self):
         buffers: list[Logic] = []
