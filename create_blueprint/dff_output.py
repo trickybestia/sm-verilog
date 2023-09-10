@@ -20,4 +20,4 @@ class DffOutput(Gate):
         return f"DFF output ({super()._render_name()})"
 
     def _compute_output_ready_time(self) -> int:
-        return self.clk_and_data.output_ready_time() + 3
+        return self.clk_and_data.output_ready_time + 3

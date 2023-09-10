@@ -26,7 +26,7 @@ class Circuit:
 
     @cached_property
     def output_ready_time(self) -> int:
-        return max(logic.output_ready_time() for logic in self.all_logic.values())
+        return max(logic.output_ready_time for logic in self.all_logic.values())
 
     @classmethod
     def from_yosys_output(
@@ -236,9 +236,7 @@ class Circuit:
         for gate in self.all_logic.values():
             outputs: list[Tuple[int, Logic]] = [
                 (
-                    cast(int, output_gate.output_ready_time())
-                    - cast(int, gate.output_ready_time())
-                    - 1,
+                    output_gate.output_ready_time - gate.output_ready_time - 1,
                     output_gate,
                 )
                 for output_gate in gate.outputs
