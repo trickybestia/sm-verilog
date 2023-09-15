@@ -68,6 +68,7 @@ def _create_yosys_script(
     return f"""
 read_verilog -sv {" ".join(f'"{file}"' for file in files)}
 synth -flatten -top {top_module}
+abc -dff
 dfflibmap -liberty scrap_mechanic_cells.lib
 abc -liberty scrap_mechanic_cells.lib
 opt
