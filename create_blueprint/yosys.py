@@ -74,6 +74,7 @@ abc -liberty scrap_mechanic_cells.lib
 opt
 {f"show -lib scrap_mechanic_cells.sv -format dot -viewer none -stretch -prefix {module_flowchart_prefix} {top_module}" if module_flowchart_prefix is not None else ""}
 write_json {blueprints_path / top_module / f"{top_module}.json"}
+stat
 """
 
 
