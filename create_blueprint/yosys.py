@@ -67,11 +67,34 @@ def _create_yosys_script(
 ) -> str:
     return f"""
 read_verilog -sv {" ".join(f'"{file}"' for file in files)}
-synth -flatten -top {top_module}
+
+hierarchy -check -top {top_module}
+proc
+flatten
+opt_expr
+opt_clean
+check
+opt -nodffe -nosdff
+fsm
+opt
+wreduce
+peepopt
+opt_clean
+alumacc
+share
+opt
+memory -nomap
+opt_clean
+opt -full
+memory_map
+opt -full
+techmap; opt -full
+
 abc -dff
+
 dfflibmap -liberty scrap_mechanic_cells.lib
 abc -liberty scrap_mechanic_cells.lib
-opt
+opt -full
 {f"show -lib scrap_mechanic_cells.sv -format dot -viewer none -stretch -prefix {module_flowchart_prefix} {top_module}" if module_flowchart_prefix is not None else ""}
 write_json {blueprints_path / top_module / f"{top_module}.json"}
 stat
