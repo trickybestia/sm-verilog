@@ -1,4 +1,5 @@
 from typing import Callable, TypeVar
+from bitstring import BitArray
 
 from .gate import Gate
 from .port import Port
@@ -26,3 +27,7 @@ def port_gate_render_name(gate: Gate, port: Port) -> str:
     result += f"\n{gate.mode.name}"
 
     return result
+
+
+def parse_yosys_attribute_value(value: str) -> int:
+    return BitArray(bin=value).int

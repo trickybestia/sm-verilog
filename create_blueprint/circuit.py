@@ -10,7 +10,7 @@ from .timer import Timer
 from .logic import Logic, LogicId
 from .cell import Cell
 from .gate import Gate, GateMode
-from .utils import get_or_insert
+from .utils import get_or_insert, parse_yosys_attribute_value
 from .id_generator import IdGenerator
 from .net import Net
 
@@ -82,13 +82,21 @@ class Circuit:
             override_z: Union[int, None] = None
 
             if "stripe_width" in netnames[port_name]["attributes"]:
-                stripe_width = int(netnames[port_name]["attributes"]["stripe_width"], 2)
+                stripe_width = parse_yosys_attribute_value(
+                    netnames[port_name]["attributes"]["stripe_width"]
+                )
             if "override_x" in netnames[port_name]["attributes"]:
-                override_x = int(netnames[port_name]["attributes"]["override_x"], 2)
+                override_x = parse_yosys_attribute_value(
+                    netnames[port_name]["attributes"]["override_x"]
+                )
             if "override_y" in netnames[port_name]["attributes"]:
-                override_y = int(netnames[port_name]["attributes"]["override_y"], 2)
+                override_y = parse_yosys_attribute_value(
+                    netnames[port_name]["attributes"]["override_y"]
+                )
             if "override_z" in netnames[port_name]["attributes"]:
-                override_z = int(netnames[port_name]["attributes"]["override_z"], 2)
+                override_z = parse_yosys_attribute_value(
+                    netnames[port_name]["attributes"]["override_z"]
+                )
 
             stripes_orientation = netnames[port_name]["attributes"].get(
                 "stripes_orientation", "horizontal"
