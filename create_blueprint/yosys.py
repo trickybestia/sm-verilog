@@ -76,13 +76,13 @@ opt_clean
 check
 opt -nodffe -nosdff
 fsm
-opt
+opt -full
 wreduce
 peepopt
 opt_clean
 alumacc
 share
-opt
+opt -full
 memory -nomap
 opt_clean
 opt -full
