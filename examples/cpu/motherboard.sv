@@ -2,21 +2,22 @@
 `include "rom.sv"
 
 module motherboard # (parameter MEM_ADDR_WIDTH = 4) (
-    input bit clk, rst,
+    input bit clk,
+    input bit rst,
 
     (* attachment="sensor", stripe_width=8, override_x=1, override_y=1, override_z=3 *)
     input  bit [(2**MEM_ADDR_WIDTH)*8-1:0] mem,
 
-    (* rotate_to_inputs, stripe_width=8, override_x=10, override_y=1, override_z=3 *)
+    (* gate_rotation="backward", stripe_width=8, override_x=10, override_y=1, override_z=3 *)
     input  bit [2*8-1:0] inputs,
 
     output bit           halt,
     output bit [7:0]     pc,
 
-    (* rotate_to_inputs, stripe_width=8, override_x=10, override_y=1, override_z=6 *)
+    (* gate_rotation="backward", stripe_width=8, override_x=10, override_y=1, override_z=6 *)
     output bit [2*8-1:0] outputs,
 
-    (* rotate_to_inputs, stripe_width=8, override_x=10, override_y=1, override_z=9 *)
+    (* gate_rotation="backward", stripe_width=8, override_x=10, override_y=1, override_z=9 *)
     output bit [4*8-1:0] regs
 );
     bit [7:0] address;

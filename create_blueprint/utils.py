@@ -1,4 +1,5 @@
-from typing import Callable, TypeVar
+from enum import StrEnum
+from typing import Callable, TypeVar, Union
 from bitstring import BitArray
 
 from .gate import Gate
@@ -29,5 +30,33 @@ def port_gate_render_name(gate: Gate, port: Port) -> str:
     return result
 
 
-def parse_yosys_attribute_value(value: str) -> int:
-    return BitArray(bin=value).int
+D = TypeVar("D")
+
+
+def get_yosys_integer_attribute(
+    attributes: dict[str, str], name: str, default: D
+) -> Union[int, D]:
+    if name not in attributes:
+        return default
+
+    return BitArray(bin=attributes[name]).int
+
+
+E = TypeVar("E", bound=StrEnum)
+D = TypeVar("D")
+
+
+def get_yosys_str_enum_attribute(
+    attributes: dict[str, str], name: str, enum: type[E], default: D
+) -> Union[E, D]:
+    if name not in attributes:
+        return default
+
+    str_value = attributes[name]
+
+    try:
+        value = enum(str_value)
+    except ValueError:
+        raise ValueError(f'invalid value "{str_value}" for attribute "{name}"')
+
+    return value

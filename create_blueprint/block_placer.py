@@ -1,7 +1,14 @@
 from dataclasses import dataclass
 from typing import Union
 
-from .port import Port
+from .port import (
+    Attachment,
+    AttachmentName,
+    GateRotation,
+    Port,
+    AttachmentRotation,
+    StripesOrientation,
+)
 from .logic import Logic, LogicId
 from .timer import Timer
 from .gate import Gate
@@ -15,9 +22,7 @@ from .circuit import Circuit
 class BlockPlacerOptions:
     height: Union[int, None]
     compact: bool
-    rotate_middle_gates_to_input: bool
     auto_height: bool
-    default_attachment: Union[str, None]
     cubic: bool
 
 
@@ -72,14 +77,7 @@ class BlockPlacer:
             if input.override_z is not None:
                 start_z = input.override_z
 
-            attachment = input.attachment
-
-            if attachment is None:
-                attachment = placer._options.default_attachment
-
-            port_width = placer._place_port(
-                input, start_x, start_y, start_z, color, attachment
-            )
+            port_width = placer._place_port(input, start_x, start_y, start_z, color)
 
             if input.override_x is None:
                 input_gates_offset += port_width
@@ -105,9 +103,7 @@ class BlockPlacer:
             if output.override_z is not None:
                 start_z = output.override_z
 
-            port_width = placer._place_port(
-                output, start_x, start_y, start_z, color, None
-            )
+            port_width = placer._place_port(output, start_x, start_y, start_z, color)
 
             if output.override_x is None:
                 output_gates_offset += port_width
@@ -129,18 +125,13 @@ class BlockPlacer:
 
         x = middle_gates_offset_in_layer // self.height
         y = 2 + layer_offset
-        z = middle_gates_offset_in_layer % self.height
+        z = middle_gates_offset_in_layer % self.height + 1
 
-        if self._options.rotate_middle_gates_to_input:
-            z += 1
-
-            if middle_gates_offset_in_layer % self.height == 0:
-                self._blueprint.create_solid(ShapeId.Concrete, x, y, 0)
+        if middle_gates_offset_in_layer % self.height == 0:
+            self._blueprint.create_solid(ShapeId.Concrete, x, y, 0)
 
         if isinstance(logic, Gate):
-            self._create_gate(
-                logic, x, y, z, self._options.rotate_middle_gates_to_input
-            )
+            self._create_gate(logic, x, y, z, GateRotation.BACKWARD, None)
         elif isinstance(logic, Timer):
             self._blueprint.create_timer(logic, x, y, z)
 
@@ -153,28 +144,41 @@ class BlockPlacer:
         gate_x: int,
         gate_y: int,
         gate_z: int,
-        attachment: str,
+        attachment: AttachmentName,
+        attachment_rotation: AttachmentRotation,
         color: Union[str, None] = None,
     ):
         attachment_id = self._circuit.id_generator.next()
 
+        x = gate_x
+        y = gate_y
+        z = gate_z
+
+        match attachment_rotation:
+            case AttachmentRotation.BACKWARD:
+                y -= 1
+            case AttachmentRotation.FORWARD:
+                y += 1
+
         match attachment:
-            case "switch":
+            case AttachmentName.SWITCH:
                 self._blueprint.create_switch(
-                    gate_x,
-                    gate_y,
-                    gate_z,
+                    x,
+                    y,
+                    z,
                     attachment_id,
                     gate_id,
+                    attachment_rotation,
                     color=color,
                 )
-            case "sensor":
+            case AttachmentName.SENSOR:
                 self._blueprint.create_sensor(
-                    gate_x - 1,
-                    gate_y,
-                    gate_z + 1,
+                    x,
+                    y,
+                    z,
                     attachment_id,
                     gate_id,
+                    attachment_rotation,
                     color=color,
                 )
             case _:
@@ -186,24 +190,16 @@ class BlockPlacer:
         x: int,
         y: int,
         z: int,
-        rotate_to_inputs: bool,
+        gate_rotation: GateRotation,
+        attachment: Attachment,
         color: Union[str, None] = None,
-        attachment: Union[str, None] = None,
     ):
-        xaxis = None
-        zaxis = None
-
-        if rotate_to_inputs:
-            y += 1
-            xaxis = -1
-            zaxis = 0
-
-        self._blueprint.create_gate(
-            gate, x, y, z, color=color, xaxis=xaxis, zaxis=zaxis
-        )
+        self._blueprint.create_gate(gate, x, y, z, gate_rotation, color=color)
 
         if attachment is not None:
-            self._create_attachment(gate.id, x, y, z, attachment, color)
+            self._create_attachment(
+                gate.id, x, y, z, attachment[0], attachment[1], color
+            )
 
     def _place_port(
         self,
@@ -212,32 +208,31 @@ class BlockPlacer:
         start_y: int,
         start_z: int,
         color: Color,
-        attachment: Union[str, None] = None,
     ) -> int:
         match port.stripes_orientation:
-            case "horizontal":
+            case StripesOrientation.HORIZONTAL:
                 for i, gate in enumerate(port.gates):
                     self._create_gate(
                         gate,
                         start_x + i % port.stripe_width,
                         start_y,
                         start_z + i // port.stripe_width,
-                        port.rotate_to_inputs,
+                        port.gate_rotation,
+                        port.attachment,
                         color=color.hex,
-                        attachment=attachment,
                     )
 
                 return min(port.stripe_width, len(port.gates))
-            case "vertical":
+            case StripesOrientation.VERTICAL:
                 for i, gate in enumerate(port.gates):
                     self._create_gate(
                         gate,
                         start_x + i // port.stripe_width,
                         start_y,
                         start_z + i % port.stripe_width,
-                        port.rotate_to_inputs,
+                        port.gate_rotation,
+                        port.attachment,
                         color=color.hex,
-                        attachment=attachment,
                     )
 
                 return len(port.gates) // port.stripe_width

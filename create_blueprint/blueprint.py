@@ -3,6 +3,7 @@ from typing import Any, Union
 from uuid import UUID, uuid4
 import json
 
+from .port import AttachmentRotation, GateRotation
 from .logic import LogicId
 from .timer import Timer
 from .gate import Gate
@@ -30,13 +31,7 @@ class Blueprint:
         y: int,
         z: int,
         color: Union[str, None] = None,
-        xaxis: Union[int, None] = None,
-        zaxis: Union[int, None] = None,
     ):
-        if xaxis is None:
-            xaxis = -1
-        if zaxis is None:
-            zaxis = 2
         if color is None:
             color = _DEFAULT_COLOR
 
@@ -44,8 +39,8 @@ class Blueprint:
             "bounds": {"x": 1, "y": 1, "z": 1},
             "pos": {"x": x, "y": y, "z": z},
             "shapeId": shape_id,
-            "xaxis": xaxis,
-            "zaxis": zaxis,
+            "xaxis": -1,
+            "zaxis": 2,
             "color": color,
         }
 
@@ -58,14 +53,23 @@ class Blueprint:
         z: int,
         id: LogicId,
         gate_id: LogicId,
+        rotation: AttachmentRotation,
         color: Union[str, None] = _DEFAULT_COLOR,
-        xaxis: Union[int, None] = None,
-        zaxis: Union[int, None] = None,
     ):
-        if xaxis is None:
-            xaxis = -3
-        if zaxis is None:
-            zaxis = -2
+        match rotation:
+            case AttachmentRotation.BACKWARD:
+                x -= 1
+                y += 1
+                z += 1
+
+                xaxis = -3
+                zaxis = -2
+            case AttachmentRotation.FORWARD:
+                z += 1
+
+                xaxis = -3
+                zaxis = 2
+
         if color is None:
             color = _DEFAULT_COLOR
 
@@ -96,14 +100,21 @@ class Blueprint:
         z: int,
         id: LogicId,
         gate_id: LogicId,
+        rotation: AttachmentRotation,
         color: Union[str, None] = None,
-        xaxis: Union[int, None] = None,
-        zaxis: Union[int, None] = None,
     ):
-        if xaxis is None:
-            xaxis = -1
-        if zaxis is None:
-            zaxis = 0
+        match rotation:
+            case AttachmentRotation.BACKWARD:
+                y += 1
+
+                xaxis = -1
+                zaxis = 0
+            case AttachmentRotation.FORWARD:
+                x -= 1
+
+                xaxis = 1
+                zaxis = 3
+
         if color is None:
             color = _DEFAULT_COLOR
 
@@ -167,14 +178,24 @@ class Blueprint:
         x: int,
         y: int,
         z: int,
+        rotation: GateRotation,
         color: Union[str, None] = None,
-        xaxis: Union[int, None] = None,
-        zaxis: Union[int, None] = None,
     ):
-        if xaxis is None:
-            xaxis = -1
-        if zaxis is None:
-            zaxis = 2
+        match rotation:
+            case GateRotation.TOP:
+                xaxis = -1
+                zaxis = 2
+            case GateRotation.BACKWARD:
+                y += 1
+
+                xaxis = -1
+                zaxis = 0
+            case GateRotation.FORWARD:
+                x -= 1
+
+                xaxis = 1
+                zaxis = 0
+
         if color is None:
             color = _DEFAULT_COLOR
 

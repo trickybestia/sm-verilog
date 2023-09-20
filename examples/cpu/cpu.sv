@@ -11,20 +11,21 @@
 
 module cpu
 (
-    input bit            clk, rst,
+    input bit            clk,
+    input bit            rst,
     input bit [15:0]     mem_value,
 
-    (* rotate_to_inputs, stripe_width=8, override_x=1, override_y=1, override_z=3 *)
+    (* gate_rotation="backward", stripe_width=8, override_x=1, override_y=1, override_z=3 *)
     input  bit [2*8-1:0] inputs,
 
     output reg           halt,
     output reg [7:0]     pc,
     output reg [7:0]     mem_address,
 
-    (* rotate_to_inputs, stripe_width=8, override_x=1, override_y=1, override_z=6 *)
+    (* gate_rotation="backward", stripe_width=8, override_x=1, override_y=1, override_z=6 *)
     output reg [2*8-1:0] outputs,
 
-    (* rotate_to_inputs, stripe_width=8, override_x=10, override_y=1, override_z=3 *)
+    (* stripe_width=8, override_x=10, override_y=1, override_z=3 *)
     output reg [4*8-1:0] regs
 );
     bit [15:0] instruction = mem_value;

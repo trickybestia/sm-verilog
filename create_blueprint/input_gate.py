@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Union
 
 from .utils import port_gate_render_name
 from .logic import LogicId
@@ -9,7 +8,7 @@ from .gate import Gate, GateMode
 
 @dataclass
 class Input(Port):
-    attachment: Union[str, None]
+    ...
 
 
 class InputGate(Gate):

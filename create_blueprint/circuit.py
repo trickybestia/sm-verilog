@@ -2,6 +2,13 @@ from functools import cached_property
 from typing import Literal, Self, Tuple, Union, cast
 import json
 
+from .port import (
+    Attachment,
+    AttachmentName,
+    AttachmentRotation,
+    GateRotation,
+    StripesOrientation,
+)
 from .output_gate import Output, OutputGate
 from .input_gate import Input, InputGate
 from .group_gate import GroupGate
@@ -10,7 +17,11 @@ from .timer import Timer
 from .logic import Logic, LogicId
 from .cell import Cell
 from .gate import Gate, GateMode
-from .utils import get_or_insert, parse_yosys_attribute_value
+from .utils import (
+    get_or_insert,
+    get_yosys_integer_attribute,
+    get_yosys_str_enum_attribute,
+)
 from .id_generator import IdGenerator
 from .net import Net
 
@@ -72,57 +83,53 @@ class Circuit:
             return get_or_insert(nets, net_id, lambda: Net())
 
         for port_name in ports:
+            attributes = netnames[port_name]["attributes"]
             port = ports[port_name]
             port_bits = port["bits"]
 
-            rotate_to_inputs = "rotate_to_inputs" in netnames[port_name]["attributes"]
-            stripe_width = len(port_bits)
-            override_x: Union[int, None] = None
-            override_y: Union[int, None] = None
-            override_z: Union[int, None] = None
+            stripe_width = get_yosys_integer_attribute(
+                attributes, "stripe_width", len(port_bits)
+            )
+            override_x = get_yosys_integer_attribute(attributes, "override_x", None)
+            override_y = get_yosys_integer_attribute(attributes, "override_y", None)
+            override_z = get_yosys_integer_attribute(attributes, "override_z", None)
 
-            if "stripe_width" in netnames[port_name]["attributes"]:
-                stripe_width = parse_yosys_attribute_value(
-                    netnames[port_name]["attributes"]["stripe_width"]
-                )
-            if "override_x" in netnames[port_name]["attributes"]:
-                override_x = parse_yosys_attribute_value(
-                    netnames[port_name]["attributes"]["override_x"]
-                )
-            if "override_y" in netnames[port_name]["attributes"]:
-                override_y = parse_yosys_attribute_value(
-                    netnames[port_name]["attributes"]["override_y"]
-                )
-            if "override_z" in netnames[port_name]["attributes"]:
-                override_z = parse_yosys_attribute_value(
-                    netnames[port_name]["attributes"]["override_z"]
-                )
-
-            stripes_orientation = netnames[port_name]["attributes"].get(
-                "stripes_orientation", "horizontal"
+            stripes_orientation = get_yosys_str_enum_attribute(
+                attributes,
+                "stripes_orientation",
+                StripesOrientation,
+                StripesOrientation.HORIZONTAL,
+            )
+            attachment_name = get_yosys_str_enum_attribute(
+                attributes, "attachment", AttachmentName, None
+            )
+            attachment_rotation = get_yosys_str_enum_attribute(
+                attributes,
+                "attachment_rotation",
+                AttachmentRotation,
+                AttachmentRotation.BACKWARD,
+            )
+            gate_rotation = get_yosys_str_enum_attribute(
+                attributes, "gate_rotation", GateRotation, GateRotation.TOP
             )
 
-            if stripes_orientation not in ("horizontal", "vertical"):
-                raise ValueError(
-                    f'invalid value "{stripes_orientation}" for attribute "stripes_orientation"'
-                )
+            attachment: Attachment = None
+
+            if attachment_name is not None:
+                attachment = (attachment_name, attachment_rotation)
 
             match port["direction"]:
                 case "input":
-                    attachment: Union[str, None] = netnames[port_name][
-                        "attributes"
-                    ].get("attachment")
-
                     input = Input(
                         port_name,
                         [],
-                        rotate_to_inputs,
+                        gate_rotation,
+                        attachment,
                         stripe_width,
                         stripes_orientation,
                         override_x,
                         override_y,
                         override_z,
-                        attachment,
                     )
                     c.inputs[port_name] = input
 
@@ -137,7 +144,8 @@ class Circuit:
                     output = Output(
                         port_name,
                         [],
-                        rotate_to_inputs,
+                        gate_rotation,
+                        attachment,
                         stripe_width,
                         stripes_orientation,
                         override_x,

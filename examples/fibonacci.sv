@@ -1,5 +1,6 @@
 module fibonacci #(parameter COUNTER_WIDTH = 16) (
-    input bit clk, rst,
+    input bit clk,
+    input bit rst,
     
     output reg [COUNTER_WIDTH-1:0] value
 );

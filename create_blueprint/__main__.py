@@ -72,18 +72,6 @@ def main():
         type=Path,
         default="./blueprints/",
     )
-    parser.add_argument(
-        "-r",
-        "--rotate-middle-gates-to-input",
-        help="rotate middle gates to make their lights visible",
-        action="store_true",
-    )
-    parser.add_argument(
-        "-a",
-        "--default-attachment",
-        help="attach this attachment if input doesn't already has an attachment",
-        choices=("switch", "sensor"),
-    )
 
     block_placer_arguments_parser = parser.add_mutually_exclusive_group(required=True)
     block_placer_arguments_parser.add_argument(
@@ -128,9 +116,7 @@ def main():
     block_placer_options = BlockPlacerOptions(
         args.height,
         args.compact,
-        args.rotate_middle_gates_to_input,
         args.auto_height,
-        args.default_attachment,
         args.cubic,
     )
 
