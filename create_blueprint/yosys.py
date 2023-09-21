@@ -90,8 +90,6 @@ memory_map
 opt -full
 techmap; opt -full
 
-abc -dff
-
 dfflibmap -liberty scrap_mechanic_cells.lib
 abc -liberty scrap_mechanic_cells.lib
 opt -full
