@@ -91,6 +91,7 @@ opt -full
 techmap; opt -full
 
 dfflibmap -liberty scrap_mechanic_cells.lib
+opt -full
 abc -liberty scrap_mechanic_cells.lib
 opt -full
 {f"show -lib scrap_mechanic_cells.sv -format dot -viewer none -stretch -prefix {module_flowchart_prefix} {top_module}" if module_flowchart_prefix is not None else ""}
