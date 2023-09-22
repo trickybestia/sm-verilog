@@ -92,8 +92,10 @@ techmap; opt -full
 
 dfflibmap -liberty scrap_mechanic_cells.lib
 opt -full
-abc -liberty scrap_mechanic_cells.lib
+abc -liberty scrap_mechanic_cells.lib -dff
+techmap -map buf_map.sv
 opt -full
+
 {f"show -lib scrap_mechanic_cells.sv -format dot -viewer none -stretch -prefix {module_flowchart_prefix} {top_module}" if module_flowchart_prefix is not None else ""}
 write_json {blueprints_path / top_module / f"{top_module}.json"}
 stat

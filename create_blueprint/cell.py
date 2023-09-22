@@ -26,7 +26,10 @@ def _input_name(i: int) -> str:
 
 
 def generate_cells(inputs_count: int) -> dict[str, Cell]:
-    result: dict[str, Cell] = {}
+    result: dict[str, Cell] = {
+        "NAND1": Cell(GateMode.NAND, [_input_name(0)], "Y"),
+        "AND1": Cell(GateMode.AND, [_input_name(0)], "Y"),
+    }
 
     for mode in (
         GateMode.AND,
@@ -36,7 +39,7 @@ def generate_cells(inputs_count: int) -> dict[str, Cell]:
         GateMode.NOR,
         GateMode.XNOR,
     ):
-        for i in range(1, inputs_count + 1):
+        for i in range(2, inputs_count + 1):
             result[f"{mode.name}{i}"] = Cell(
                 mode, [_input_name(j) for j in range(i)], "Y"
             )
