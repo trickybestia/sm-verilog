@@ -74,7 +74,7 @@ flatten
 opt_expr
 opt_clean
 check
-opt -nodffe -nosdff
+opt -nodffe -nosdff -full
 fsm
 opt -full
 wreduce
