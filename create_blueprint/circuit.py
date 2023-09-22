@@ -12,7 +12,7 @@ from .port import (
 from .output_gate import Output, OutputGate
 from .input_gate import Input, InputGate
 from .group_gate import GroupGate
-from .dff_output import DffOutput
+from .sync_sr_latch_output import SyncSRLatchOutput
 from .timer import Timer
 from .logic import Logic, LogicId
 from .cell import Cell
@@ -27,8 +27,8 @@ from .net import Net
 
 
 class Circuit:
-    dff_inputs: list[GroupGate]
-    dffs: list[DffOutput]
+    latch_inputs: list[GroupGate]
+    latches: list[SyncSRLatchOutput]
     all_logic: dict[LogicId, Logic]
     middle_logic: dict[LogicId, Logic]
     inputs: dict[str, Input]
@@ -48,15 +48,15 @@ class Circuit:
     ) -> Self:
         c = cls._from_yosys_output(cells, yosys_output, top_module)
 
-        if len(c.dffs) != 0:
+        if len(c.latches) != 0:
             c._connect_dffs()
             c._insert_buffers()
 
         return c
 
     def __init__(self) -> None:
-        self.dff_inputs = []
-        self.dffs = []
+        self.latch_inputs = []
+        self.latches = []
         self.all_logic = {}
         self.middle_logic = {}
         self.inputs = {}
@@ -185,36 +185,31 @@ class Circuit:
             connections = cell["connections"]
 
             match cell["type"]:
-                case "DFF":
-                    not_data = c._create_gate("middle", GateMode.NAND)
-
-                    clk_and_data = GroupGate(
-                        c.id_generator.next(), c.dff_inputs, GateMode.AND
+                case "SYNC_SR_LATCH":
+                    clk_and_set = GroupGate(
+                        c.id_generator.next(), c.latch_inputs, GateMode.AND
                     )
-                    c._register_logic(clk_and_data, "middle")
-                    clk_and_not_data = GroupGate(
-                        c.id_generator.next(), c.dff_inputs, GateMode.AND
+                    c._register_logic(clk_and_set, "middle")
+                    clk_and_reset = GroupGate(
+                        c.id_generator.next(), c.latch_inputs, GateMode.AND
                     )
-                    c._register_logic(clk_and_not_data, "middle")
+                    c._register_logic(clk_and_reset, "middle")
 
-                    c.dff_inputs.extend((clk_and_data, clk_and_not_data))
-
-                    _link(not_data, clk_and_not_data)
+                    c.latch_inputs.extend((clk_and_set, clk_and_reset))
 
                     get_net(connections["C"][0]).outputs_ids.extend(
-                        (clk_and_data.id, clk_and_not_data.id)
+                        (clk_and_set.id, clk_and_reset.id)
                     )
-                    get_net(connections["D"][0]).outputs_ids.extend(
-                        (clk_and_data.id, not_data.id)
-                    )
+                    get_net(connections["S"][0]).outputs_ids.append(clk_and_set.id)
+                    get_net(connections["R"][0]).outputs_ids.append(clk_and_reset.id)
 
-                    dff = DffOutput(
-                        c.id_generator.next(), clk_and_data, clk_and_not_data
+                    latch = SyncSRLatchOutput(
+                        c.id_generator.next(), clk_and_set, clk_and_reset
                     )
-                    c.dffs.append(dff)
-                    c._register_logic(dff, "middle")
+                    c.latches.append(latch)
+                    c._register_logic(latch, "middle")
 
-                    get_net(connections["Q"][0]).input_id = dff.id
+                    get_net(connections["Q"][0]).input_id = latch.id
                 case _:
                     gate = c._create_gate("middle")
 
@@ -235,15 +230,15 @@ class Circuit:
         return c
 
     def _connect_dffs(self):
-        for dff in self.dffs:
+        for latch in self.latches:
             reset_loop_gate = self._create_gate("middle", GateMode.OR)
             set_loop_gate = self._create_gate("middle", GateMode.NOR)
 
-            _link(dff.clk_and_data, set_loop_gate)
-            _link(dff.clk_and_not_data, reset_loop_gate)
+            _link(latch.clk_and_set, set_loop_gate)
+            _link(latch.clk_and_reset, reset_loop_gate)
 
-            _link(reset_loop_gate, dff)
-            _link(dff, set_loop_gate)
+            _link(reset_loop_gate, latch)
+            _link(latch, set_loop_gate)
             _link(set_loop_gate, reset_loop_gate)
 
     def _insert_buffers(self):
@@ -266,7 +261,7 @@ class Circuit:
             for required_delay, output_gate in outputs:
                 if (
                     not output_gate.requires_inputs_buffering
-                    or output_gate.depends_on_dff != gate.depends_on_dff
+                    or output_gate.depends_on_latch != gate.depends_on_latch
                 ):
                     continue
 

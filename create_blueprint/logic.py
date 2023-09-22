@@ -19,11 +19,11 @@ class Logic(ABC):
         return False
 
     @cached_property
-    def depends_on_dff(self) -> bool:
+    def depends_on_latch(self) -> bool:
         if len(self.inputs) == 0:
             return False
 
-        return all(input.depends_on_dff for input in self.inputs)
+        return all(input.depends_on_latch for input in self.inputs)
 
     def __init__(self, id: LogicId) -> None:
         self.id = id
@@ -60,7 +60,7 @@ class Logic(ABC):
             (
                 input.output_ready_time
                 for input in self.inputs
-                if input.depends_on_dff == self.depends_on_dff
+                if input.depends_on_latch == self.depends_on_latch
             ),
             default=default,
         )

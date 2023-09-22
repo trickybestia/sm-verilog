@@ -24,13 +24,6 @@ def _create_gate_formula(mode: GateMode, inputs: list[str]) -> str:
 
 def _create_cells_liberty(cells: dict[str, Cell]) -> str:
     result = """library(scrap_mechanic_cells) {
-\tcell(DFF) {
-\t\tff(IQ, IQN) { clocked_on: C; next_state: D; }
-\t\tpin(C) { direction: input; clock: true; }
-\t\tpin(D) { direction: input; }
-\t\tpin(Q) { direction: output; function: "IQ"; }
-\t}
-
 """
 
     for name, cell in cells.items():
@@ -49,7 +42,7 @@ def _create_cells_liberty(cells: dict[str, Cell]) -> str:
 
 
 def _create_cells_verilog(cells: dict[str, Cell]) -> str:
-    result = "module DFF(input C, input D, output reg Q);\nendmodule\n\n"
+    result = "module SYNC_SR_LATCH(input C, input S, input R, output Q);\nendmodule\n\n"
 
     for name, cell in cells.items():
         result += f"module {name}({', '.join([f'input {input}' for input in cell.inputs] + [f'output {cell.output}'])});\n"
@@ -90,8 +83,10 @@ memory_map
 opt -full
 techmap; opt -full
 
-dfflibmap -liberty scrap_mechanic_cells.lib
-opt -full
+dfflegalize -cell $_DFF_P_ x
+opt -nodffe -nosdff -full
+techmap -map ff_map.sv
+techmap; opt -full
 abc -liberty scrap_mechanic_cells.lib -dff
 techmap -map buf_map.sv
 opt -full
