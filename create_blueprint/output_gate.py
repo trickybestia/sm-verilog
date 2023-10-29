@@ -9,11 +9,18 @@ from .group_gate import GroupGate
 
 @dataclass
 class Output(Port):
-    ...
+    ignore_timings: bool
 
 
 class OutputGate(GroupGate):
     _output: Output
+
+    @property
+    def requires_inputs_buffering(self) -> bool:
+        if self._output.ignore_timings:
+            return False
+
+        return super().requires_inputs_buffering
 
     def __init__(
         self,

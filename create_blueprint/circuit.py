@@ -52,6 +52,8 @@ class Circuit:
             c._connect_dffs()
             c._insert_buffers()
 
+        c._handle_ingore_timings_outputs()
+
         return c
 
     def __init__(self) -> None:
@@ -141,6 +143,8 @@ class Circuit:
 
                         get_net(bit).input_id = gate.id
                 case "output":
+                    ignore_timings = "ignore_timings" in attributes
+
                     output = Output(
                         port_name,
                         [],
@@ -151,6 +155,7 @@ class Circuit:
                         override_x,
                         override_y,
                         override_z,
+                        ignore_timings,
                     )
                     c.outputs[port_name] = output
 
@@ -284,6 +289,22 @@ class Circuit:
         for buffer in buffers:
             self.all_logic[buffer.id] = buffer
             self.middle_logic[buffer.id] = buffer
+
+    def _handle_ingore_timings_outputs(self):
+        for output in self.outputs.values():
+            for i, gate in enumerate(output.gates):
+                if (
+                    len(gate.inputs) == 1
+                    and isinstance(gate.inputs[0], Gate)
+                    and not gate.requires_inputs_buffering
+                    and gate.inputs[0].id in self.middle_logic
+                ):
+                    del self.middle_logic[gate.inputs[0].id]
+                    del self.all_logic[gate.inputs[0].id]
+
+                    output.gates[i] = gate.inputs[0]
+
+                    _unlink(gate.inputs[0], gate)
 
     def _register_logic(self, logic: Logic, kind: Union[Literal["middle"], None]):
         self.all_logic[logic.id] = logic
