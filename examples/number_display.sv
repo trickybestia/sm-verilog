@@ -26,7 +26,7 @@ endfunction
 module number_display #(parameter NUMBER_WIDTH = 8) (
     input bit [NUMBER_WIDTH-1:0] number,
 
-    (* rotate_to_inputs, stripe_width=5, stripes_orientation="vertical", override_x=1, override_y=1, override_z=3 *)
+    (* gate_rotation="backward", stripe_width=5, stripes_orientation="vertical", override_x=1, override_y=1, override_z=3 *)
     output bit [15*DIGITS_COUNT+5*(DIGITS_COUNT-1)-1:0] display
 );
     localparam DIGITS_COUNT = $rtoi($ceil(NUMBER_WIDTH * $log10(2)));
