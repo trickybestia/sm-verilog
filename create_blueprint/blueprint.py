@@ -229,9 +229,14 @@ class Blueprint:
                     "name": self.name,
                     "type": "Blueprint",
                     "version": 0,
-                }
+                },
+                indent=3,
+                separators=(",", " : "),
             )
         )
         (path / "blueprint.json").write_text(
-            json.dumps({"bodies": [{"childs": self.blocks}], "version": 4})
+            json.dumps(
+                {"bodies": [{"childs": self.blocks}], "version": 4},
+                separators=(",", ":"),
+            )
         )
