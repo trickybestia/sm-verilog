@@ -39,8 +39,8 @@ class Blueprint:
             "bounds": {"x": 1, "y": 1, "z": 1},
             "pos": {"x": x, "y": y, "z": z},
             "shapeId": shape_id,
-            "xaxis": -1,
-            "zaxis": 2,
+            "xaxis": 1,
+            "zaxis": 3,
             "color": color,
         }
 
@@ -56,18 +56,16 @@ class Blueprint:
         rotation: AttachmentRotation,
         color: Union[str, None] = _DEFAULT_COLOR,
     ):
+        xaxis = 1
+
         match rotation:
             case AttachmentRotation.BACKWARD:
-                x -= 1
                 y += 1
-                z += 1
 
-                xaxis = -3
                 zaxis = -2
             case AttachmentRotation.FORWARD:
                 z += 1
 
-                xaxis = -3
                 zaxis = 2
 
         if color is None:
@@ -103,16 +101,15 @@ class Blueprint:
         rotation: AttachmentRotation,
         color: Union[str, None] = None,
     ):
+        xaxis = 1
+
         match rotation:
             case AttachmentRotation.BACKWARD:
                 y += 1
+                z += 1
 
-                xaxis = -1
-                zaxis = 0
+                zaxis = -3
             case AttachmentRotation.FORWARD:
-                x -= 1
-
-                xaxis = 1
                 zaxis = 3
 
         if color is None:
@@ -141,21 +138,12 @@ class Blueprint:
         y: int,
         z: int,
         color: Union[str, None] = None,
-        xaxis: Union[int, None] = None,
-        zaxis: Union[int, None] = None,
     ):
         if timer.ticks > 2400:
             raise ValueError(f"timer.ticks ({timer.ticks}) must be < 2400")
 
-        if xaxis is None:
-            xaxis = -1
-        if zaxis is None:
-            zaxis = 2
-        if color is None:
-            color = _DEFAULT_COLOR
-
         block = {
-            "pos": {"x": x, "y": y, "z": z},
+            "pos": {"x": x, "y": y + 1, "z": z},
             "controller": {
                 "active": False,
                 "id": timer.id,
@@ -165,8 +153,8 @@ class Blueprint:
                 "ticks": timer.ticks % 40,
             },
             "shapeId": ShapeId.Timer,
-            "xaxis": xaxis,
-            "zaxis": zaxis,
+            "xaxis": 1,
+            "zaxis": -2,
             "color": color,
         }
 
@@ -181,20 +169,20 @@ class Blueprint:
         rotation: GateRotation,
         color: Union[str, None] = None,
     ):
+        xaxis = 1
+
         match rotation:
             case GateRotation.TOP:
-                xaxis = -1
-                zaxis = 2
-            case GateRotation.BACKWARD:
                 y += 1
 
-                xaxis = -1
-                zaxis = 0
-            case GateRotation.FORWARD:
-                x -= 1
+                zaxis = -2
+            case GateRotation.BACKWARD:
+                zaxis = -3
 
-                xaxis = 1
-                zaxis = 0
+                y += 1
+                z += 1
+            case GateRotation.FORWARD:
+                zaxis = 3
 
         if color is None:
             color = _DEFAULT_COLOR
