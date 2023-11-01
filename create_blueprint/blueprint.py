@@ -54,7 +54,7 @@ class Blueprint:
         id: LogicId,
         gate_id: LogicId,
         rotation: AttachmentRotation,
-        color: Union[str, None] = _DEFAULT_COLOR,
+        color: Union[str, None] = None,
     ):
         xaxis = 1
 
