@@ -50,9 +50,12 @@ class Circuit:
 
         if len(c.latches) != 0:
             c._connect_dffs()
-            c._insert_buffers()
 
         c._handle_ingore_timings_outputs()
+        c._ensure_connection_limit()
+
+        if len(c.latches) != 0:
+            c._insert_buffers()
 
         return c
 
@@ -243,7 +246,7 @@ class Circuit:
             _link(latch.clk_and_reset, reset_loop_gate)
 
             _link(reset_loop_gate, latch)
-            _link(latch, set_loop_gate)
+            _link(latch, set_loop_gate, True)
             _link(set_loop_gate, reset_loop_gate)
 
     def _insert_buffers(self):
@@ -307,6 +310,34 @@ class Circuit:
 
                     _unlink(gate.inputs[0], gate)
 
+    def _ensure_connection_limit(self):
+        MAX_LOGIC_OUTPUTS_COUNT = 255
+
+        gates_to_insert: list[Gate] = []
+
+        for logic in self.all_logic.values():
+            if len(logic.outputs) <= MAX_LOGIC_OUTPUTS_COUNT:
+                continue
+
+            new_outputs: list[Gate] = [Gate(self.id_generator.next())]
+
+            while len(new_outputs) + len(logic.outputs) > MAX_LOGIC_OUTPUTS_COUNT:
+                if len(new_outputs[-1].outputs) == MAX_LOGIC_OUTPUTS_COUNT:
+                    new_outputs.append(Gate(self.id_generator.next()))
+
+                gate = logic.outputs[-1]
+
+                _unlink(logic, gate)
+                _link(new_outputs[-1], gate)
+
+            for new_output in new_outputs:
+                gates_to_insert.append(new_output)
+
+                _link(logic, new_output)
+
+        for gate in gates_to_insert:
+            self._register_logic(gate, "middle")
+
     def _register_logic(self, logic: Logic, kind: Union[Literal["middle"], None]):
         self.all_logic[logic.id] = logic
 
@@ -326,9 +357,13 @@ class Circuit:
         return gate
 
 
-def _link(input: Logic, output: Logic):
-    input.outputs.append(output)
-    output.inputs.append(input)
+def _link(input: Logic, output: Logic, insert_front: bool = False):
+    if insert_front:
+        input.outputs.insert(0, output)
+        output.inputs.insert(0, input)
+    else:
+        input.outputs.append(output)
+        output.inputs.append(input)
 
 
 def _unlink(input: Logic, output: Logic):
