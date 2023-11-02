@@ -300,7 +300,8 @@ class Circuit:
                     and gate.inputs[0].id in self.middle_logic
                 ):
                     del self.middle_logic[gate.inputs[0].id]
-                    del self.all_logic[gate.inputs[0].id]
+
+                    del self.all_logic[gate.id]
 
                     output.gates[i] = gate.inputs[0]
 
