@@ -2,6 +2,7 @@ from functools import cached_property
 from typing import Literal, Self, Tuple, Union, cast
 import json
 
+from .buffer_gate import BufferGate
 from .port import (
     Attachment,
     AttachmentName,
@@ -250,9 +251,7 @@ class Circuit:
             _link(set_loop_gate, reset_loop_gate)
 
     def _insert_buffers(self):
-        buffers: list[Logic] = []
-
-        for gate in self.all_logic.values():
+        for gate in self.all_logic.copy().values():
             outputs: list[Tuple[int, Logic]] = [
                 (
                     output_gate.output_ready_time - gate.output_ready_time - 1,
@@ -280,18 +279,23 @@ class Circuit:
                 if new_buffer_delay > 0:
                     buffer = Timer(self.id_generator.next(), new_buffer_delay - 1)
 
-                    buffers.append(buffer)
+                    self._register_logic(buffer, "middle")
 
-                    _link(last_buffer, buffer)
+                    if isinstance(last_buffer, BufferGate):
+                        buffer.ticks += 1
+
+                        _replace(last_buffer, buffer)
+                        gate = buffer
+
+                        del self.all_logic[last_buffer.id]
+                        del self.middle_logic[last_buffer.id]
+                    else:
+                        _link(last_buffer, buffer)
 
                     last_buffer = buffer
                     last_buffer_total_delay = required_delay
 
                 _link(last_buffer, output_gate)
-
-        for buffer in buffers:
-            self.all_logic[buffer.id] = buffer
-            self.middle_logic[buffer.id] = buffer
 
     def _handle_ignore_timings_outputs(self):
         for output in self.outputs.values():
@@ -313,17 +317,17 @@ class Circuit:
     def _ensure_connection_limit(self):
         MAX_LOGIC_OUTPUTS_COUNT = 255
 
-        gates_to_insert: list[Gate] = []
+        gates_to_insert: list[BufferGate] = []
 
         for logic in self.all_logic.values():
             if len(logic.outputs) <= MAX_LOGIC_OUTPUTS_COUNT:
                 continue
 
-            new_outputs: list[Gate] = [Gate(self.id_generator.next())]
+            new_outputs: list[BufferGate] = [BufferGate(self.id_generator.next())]
 
             while len(new_outputs) + len(logic.outputs) > MAX_LOGIC_OUTPUTS_COUNT:
                 if len(new_outputs[-1].outputs) == MAX_LOGIC_OUTPUTS_COUNT:
-                    new_outputs.append(Gate(self.id_generator.next()))
+                    new_outputs.append(BufferGate(self.id_generator.next()))
 
                 gate = logic.outputs[-1]
 
@@ -355,6 +359,16 @@ class Circuit:
         self._register_logic(gate, kind)
 
         return gate
+
+
+def _replace(source: Logic, target: Logic):
+    for input in source.inputs[:]:
+        _unlink(input, source)
+        _link(input, target)
+
+    for output in source.outputs[:]:
+        _unlink(source, output)
+        _link(target, output)
 
 
 def _link(input: Logic, output: Logic, insert_front: bool = False):
