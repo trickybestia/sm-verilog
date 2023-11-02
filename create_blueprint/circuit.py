@@ -51,7 +51,7 @@ class Circuit:
         if len(c.latches) != 0:
             c._connect_dffs()
 
-        c._handle_ingore_timings_outputs()
+        c._handle_ignore_timings_outputs()
         c._ensure_connection_limit()
 
         if len(c.latches) != 0:
@@ -293,7 +293,7 @@ class Circuit:
             self.all_logic[buffer.id] = buffer
             self.middle_logic[buffer.id] = buffer
 
-    def _handle_ingore_timings_outputs(self):
+    def _handle_ignore_timings_outputs(self):
         for output in self.outputs.values():
             for i, gate in enumerate(output.gates):
                 if (
