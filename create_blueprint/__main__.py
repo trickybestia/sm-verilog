@@ -141,6 +141,22 @@ def main():
 
     print(f"Circuit delay is {circuit.output_ready_time} ticks.\n")
 
+    blocks_count = {}
+
+    for block in blueprint.blocks:
+        block_count = blocks_count.get(block["shapeId"], 0)
+
+        blocks_count[block["shapeId"]] = block_count + 1
+
+    print("Blocks count:")
+
+    for shape_id, block_count in sorted(
+        blocks_count.items(), key=lambda item: item[1], reverse=True
+    ):
+        print(f"\t{shape_id.name}: {block_count}")
+
+    print(f"\n\tTotal: {len(blueprint.blocks)}\n")
+
     print(
         f'Your blueprint is "{args.blueprints_path / args.top / str(blueprint.uuid)}"'
     )
