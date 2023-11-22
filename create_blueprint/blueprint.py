@@ -7,7 +7,7 @@ from .port import AttachmentRotation, GateRotation
 from .logic import LogicId
 from .timer import Timer
 from .gate import Gate
-from .shapes import ShapeId
+from .shape_id import ShapeId
 
 _DEFAULT_COLOR = "222222"
 

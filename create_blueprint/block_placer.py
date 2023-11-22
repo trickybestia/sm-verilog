@@ -12,7 +12,7 @@ from .port import (
 from .logic import Logic, LogicId
 from .timer import Timer
 from .gate import Gate
-from .shapes import ShapeId
+from .shape_id import ShapeId
 from .color_generator import Color, ColorGenerator
 from .blueprint import Blueprint
 from .circuit import Circuit

@@ -2,7 +2,7 @@ import argparse
 from pathlib import Path
 
 from create_blueprint.blueprint import Blueprint
-from create_blueprint.shapes import ShapeId
+from create_blueprint.shape_id import ShapeId
 
 ZERO_BIT_COLOR = "222222"
 ONE_BIT_COLOR = "EEEEEE"
