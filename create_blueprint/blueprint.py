@@ -142,6 +142,9 @@ class Blueprint:
         if timer.ticks > 2400:
             raise ValueError(f"timer.ticks ({timer.ticks}) must be < 2400")
 
+        if color is None:
+            color = _DEFAULT_COLOR
+
         block = {
             "pos": {"x": x, "y": y + 1, "z": z},
             "controller": {
