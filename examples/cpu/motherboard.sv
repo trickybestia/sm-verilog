@@ -20,22 +20,23 @@ module motherboard # (parameter MEM_ADDR_WIDTH = 4) (
     (* gate_rotation="backward", stripe_width=8, override_x=10, override_y=1, override_z=9 *)
     output bit [4*8-1:0] regs
 );
-    bit [7:0] address;
+    bit [7:0] rom_address;
     bit [15:0] rom_value;
 
-    cpu cpu(
-        .clk(clk),
-        .rst(rst),
-        .halt(halt),
-        .inputs(inputs),
-        .outputs(outputs),
-        .pc(pc),
-        .regs(regs),
-        .mem_value(rom_value),
-        .mem_address(address)
+    cpu cpu (
+        .clk,
+        .rst,
+        .halt,
+        .inputs,
+        .outputs,
+        .pc,
+        .regs,
+        .rom_value,
+        .rom_address
     );
-    rom #(.ADDR_WIDTH(MEM_ADDR_WIDTH)) rom(
-        .address(address[MEM_ADDR_WIDTH-1:0]),
+    rom #(.ADDR_WIDTH(MEM_ADDR_WIDTH)) rom (
+        .address(rom_address[MEM_ADDR_WIDTH-1:0]),
         .read_value(rom_value),
-        .mem(mem));
+        .mem(mem)
+    );
 endmodule

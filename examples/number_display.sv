@@ -24,27 +24,27 @@ function bit [14:0] digit_pattern(digit_t digit);
 endfunction
 
 module number_display #(parameter NUMBER_WIDTH = 8) (
-    input bit [NUMBER_WIDTH-1:0] number,
+    input bit [NUMBER_WIDTH-1:0] value,
 
     (* gate_rotation="backward", stripe_width=5, stripes_orientation="vertical", override_x=1, override_y=1, override_z=3 *)
     output bit [15*DIGITS_COUNT+5*(DIGITS_COUNT-1)-1:0] display
 );
     localparam DIGITS_COUNT = $rtoi($ceil(NUMBER_WIDTH * $log10(2)));
-    
+
     digit_t digits [DIGITS_COUNT];
-    bit [NUMBER_WIDTH-1:0] remaining_number;
+    bit [NUMBER_WIDTH-1:0] remaining_value;
     
     always begin
         display = '0;
 
-        remaining_number = number;
+        remaining_value = value;
 
         for (integer i = 0; i != DIGITS_COUNT; i++) begin
-            if (remaining_number == '0) begin
+            if (remaining_value == '0) begin
                 digits[DIGITS_COUNT - i - 1] = empty_digit;
             end else begin
-                digits[DIGITS_COUNT - i - 1] = remaining_number % 10;
-                remaining_number /= 10;
+                digits[DIGITS_COUNT - i - 1] = remaining_value % 10;
+                remaining_value /= 10;
             end
         end
 

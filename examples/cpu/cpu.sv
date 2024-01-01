@@ -13,14 +13,14 @@ module cpu
 (
     input bit            clk,
     input bit            rst,
-    input bit [15:0]     mem_value,
+    input bit [15:0]     rom_value,
 
     (* gate_rotation="backward", stripe_width=8, override_x=1, override_y=1, override_z=3 *)
     input  bit [2*8-1:0] inputs,
 
     output reg           halt,
     output reg [7:0]     pc,
-    output reg [7:0]     mem_address,
+    output reg [7:0]     rom_address,
 
     (* gate_rotation="backward", stripe_width=8, override_x=1, override_y=1, override_z=6 *)
     output reg [2*8-1:0] outputs,
@@ -28,7 +28,7 @@ module cpu
     (* stripe_width=8, override_x=10, override_y=1, override_z=3 *)
     output reg [4*8-1:0] regs
 );
-    bit [15:0] instruction = mem_value;
+    bit [15:0] instruction = rom_value;
     
     bit [1:0]  opcode      = instruction[1:0];
     bit [1:0]  rs1         = instruction[3:2];
@@ -65,7 +65,7 @@ module cpu
             outputs = 0;
             halt = 0;
             regs = 0;
-            mem_address = 0;
+            rom_address = 0;
         end else if (!halt) begin
             pc_result = pc + 1;
 
@@ -100,7 +100,7 @@ module cpu
                 if (write_rd) regs[rd*8+:8] = rd_val;
 
                 pc = pc_result;
-                mem_address = pc;
+                rom_address = pc;
             end
         end
     end
