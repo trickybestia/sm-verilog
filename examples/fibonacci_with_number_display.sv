@@ -12,7 +12,7 @@ module fibonacci_with_number_display #(parameter NUMBER_WIDTH = 16) (
 
     bit [NUMBER_WIDTH-1:0] value;
 
-    number_display #(.NUMBER_WIDTH(NUMBER_WIDTH)) number_display1(
+    number_display #(.NUMBER_WIDTH(NUMBER_WIDTH)) number_display(
         .value,
         .display
     );
