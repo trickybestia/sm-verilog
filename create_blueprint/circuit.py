@@ -80,7 +80,7 @@ class Circuit:
         ports = module["ports"]
         netnames = module["netnames"]
 
-        c = Circuit()
+        c = cls()
         nets: dict[int, Net] = {}
         volatile_outputs: list[GroupGate] = []
         always_zero_gate: Union[Gate, None] = None
