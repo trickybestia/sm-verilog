@@ -45,19 +45,20 @@ module rv32i_cpu_ram (
     endfunction
 
     always @(posedge clk) begin
+        value = '0;
+
         if (rst) begin
             for (integer i = 0; i != SIZE; i++) begin
                 ram[i] = 0;
             end
+        end else begin
+            case (mode)
+                `MEM_READ:       value = read(address);
+                `MEM_WRITE_WORD: write(address, write_value, 4);
+                `MEM_WRITE_HALF: write(address, write_value, 2);
+                `MEM_WRITE_BYTE: write(address, write_value, 1);
+            endcase
         end
-
-        value = '0;
-        case (mode)
-            `MEM_READ:       value = read(address);
-            `MEM_WRITE_WORD: write(address, write_value, 4);
-            `MEM_WRITE_HALF: write(address, write_value, 2);
-            `MEM_WRITE_BYTE: write(address, write_value, 1);
-        endcase
 
         for (integer i = 0; i != SIZE; i++) display[i*8+:8] <= ram[i];
     end
