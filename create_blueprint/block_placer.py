@@ -32,6 +32,7 @@ class BlockPlacer:
     _options: BlockPlacerOptions
     _height: int
     _middle_gates_offset: int
+    _one_middle_logic_placed: bool
 
     def __init__(
         self, circuit: Circuit, blueprint: Blueprint, options: BlockPlacerOptions
@@ -42,6 +43,7 @@ class BlockPlacer:
         self._blueprint = blueprint
         self._options = options
         self._middle_gates_offset = 0
+        self._one_middle_logic_placed = False
 
         if options.auto_height:
             self.height = int(len(circuit.middle_logic) ** 0.5)
@@ -127,7 +129,10 @@ class BlockPlacer:
         y = 2 + layer_offset
         z = middle_gates_offset_in_layer % self.height + 1
 
-        if middle_gates_offset_in_layer % self.height == 0:
+        if (
+            not (self._one_middle_logic_placed and self._options.compact)
+            and middle_gates_offset_in_layer % self.height == 0
+        ):
             self._blueprint.create_solid(ShapeId.Concrete, x, y, 0)
 
         if isinstance(logic, Gate):
@@ -137,6 +142,8 @@ class BlockPlacer:
 
         if not self._options.compact:
             self._middle_gates_offset += 1
+
+        self._one_middle_logic_placed = True
 
     def _create_attachment(
         self,
