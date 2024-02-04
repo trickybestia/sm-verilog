@@ -107,6 +107,14 @@ xdot blueprints/adder/gates.dot
 
 ![](./docs/images/flowcharts.png)
 
+### Sequential circuits and clock signal
+
+Make sure that your clock signal is exactly 3 tick long. You can use [this blueprint](https://steamcommunity.com/sharedfiles/filedetails/?id=3027784986) to generate such signal.
+
+If you want to make your circuit work as fast as it can, consider outputting clock signal from circuit and then connecting it back to input. sm-verilog ensures that all output gates of sequential circuit get their values at the same tick. `examples/counter.sv` is a simple example of this.
+
+![](./docs/images/clock_looping.png)
+
 ### Blueprint reloading without restart
 
 You need some blueprint which game already "sees" and which you can load. Now you go to it's directory and replace `blueprint.json` with one which is a part of new blueprint. Do not replace `description.json`!
