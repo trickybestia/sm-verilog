@@ -258,7 +258,7 @@ def _create_blueprint_icon(name: str) -> Image.Image:
 
     icon = Image.new("RGB", (256, 256))
     draw = ImageDraw.Draw(icon)
-    font = ImageFont.truetype("Hack-Regular.ttf", FONT_SIZE)
+    font = ImageFont.truetype("resources/Hack/Hack-Regular.ttf", FONT_SIZE)
 
     draw.multiline_text(
         (0, 0), "\n".join(multiline_name), fill=(255, 255, 255), font=font
