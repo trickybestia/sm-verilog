@@ -85,13 +85,13 @@ techmap; opt -full
 
 dfflegalize -cell $_DFF_P_ x
 opt -nodffe -nosdff -full
-techmap -map ff_map.sv
+techmap -map resources/ff_map.sv
 techmap; opt -full
-abc -liberty scrap_mechanic_cells.lib -dff
-techmap -map buf_map.sv
+abc -liberty resources/scrap_mechanic_cells.lib -dff
+techmap -map resources/buf_map.sv
 opt -full
 
-{f"show -lib scrap_mechanic_cells.sv -format dot -viewer none -stretch -prefix {module_flowchart_prefix} {top_module}" if module_flowchart_prefix is not None else ""}
+{f"show -lib resources/scrap_mechanic_cells.sv -format dot -viewer none -stretch -prefix {module_flowchart_prefix} {top_module}" if module_flowchart_prefix is not None else ""}
 write_json {blueprints_path / top_module / f"{top_module}.json"}
 stat
 """
@@ -104,8 +104,8 @@ def compile(
     module_flowchart_prefix: Union[str, None],
     blueprints_path: Path,
 ) -> str:
-    Path("scrap_mechanic_cells.lib").write_text(_create_cells_liberty(cells))
-    Path("scrap_mechanic_cells.sv").write_text(_create_cells_verilog(cells))
+    Path("resources/scrap_mechanic_cells.lib").write_text(_create_cells_liberty(cells))
+    Path("resources/scrap_mechanic_cells.sv").write_text(_create_cells_verilog(cells))
 
     run(
         ["yosys", "-s", "-"],

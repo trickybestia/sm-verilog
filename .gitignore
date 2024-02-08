@@ -2,5 +2,5 @@
 __pycache__
 
 /blueprints
-/scrap_mechanic_cells.lib
-/scrap_mechanic_cells.sv
+/resources/scrap_mechanic_cells.lib
+/resources/scrap_mechanic_cells.sv
