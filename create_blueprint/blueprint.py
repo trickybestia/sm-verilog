@@ -2,6 +2,8 @@ from pathlib import Path
 from typing import Any, Union
 from uuid import UUID, uuid4
 import json
+from PIL import Image, ImageDraw, ImageFont
+from datetime import datetime
 
 from .port import AttachmentRotation, GateRotation
 from .logic import LogicId
@@ -231,3 +233,35 @@ class Blueprint:
                 separators=(",", ":"),
             )
         )
+        _create_blueprint_icon(self.name).save(path / "icon.png")
+
+
+def _create_blueprint_icon(name: str) -> Image.Image:
+    LINE_LENGTH = 7
+    LINES_COUNT = 4
+    FONT_SIZE = 60
+
+    multiline_name = []
+
+    while len(name) > LINE_LENGTH:
+        multiline_name.append(name[:LINE_LENGTH])
+        name = name[LINE_LENGTH:]
+
+    multiline_name.append(name)
+
+    multiline_name = multiline_name[:3]
+
+    while len(multiline_name) < LINES_COUNT - 1:
+        multiline_name.append(" " * LINE_LENGTH)
+
+    multiline_name.append(" " * (LINE_LENGTH - 5) + datetime.now().strftime("%H:%M"))
+
+    icon = Image.new("RGB", (256, 256))
+    draw = ImageDraw.Draw(icon)
+    font = ImageFont.truetype("Hack-Regular.ttf", FONT_SIZE)
+
+    draw.multiline_text(
+        (0, 0), "\n".join(multiline_name), fill=(255, 255, 255), font=font
+    )
+
+    return icon
